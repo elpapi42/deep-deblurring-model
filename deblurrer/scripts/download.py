@@ -125,8 +125,9 @@ if (__name__ == '__main__'):
     if (not downloaded):
         print('Error on download or file already downloaded')
 
-    # Extract blur-dataset
-    print('Extracting files')
-    if (not extract(download_path, folder_path) or not downloaded):
-        print('Error Extracting the files')
-    print('Extraction succesful')
+    if (downloaded):
+        # Extract blur-dataset
+        print('Extracting files')
+        if (not extract(download_path, folder_path)):
+            print('Download path does not exists')
+        print('Extraction succesful')
