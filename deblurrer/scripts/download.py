@@ -23,45 +23,104 @@ import requests
 
 from tqdm import tqdm
 
-folder_path = os.path.join(
-    os.path.dirname(
+
+def preprocess():
+    """Download the blur dataset from kaggle."""
+    pass
+
+
+def create_folder():
+    """
+    Generate download path if it does not exist.
+
+    Returns:
+        Generated folder path
+
+    """
+    folder_path = os.path.join(
         os.path.dirname(
             os.path.dirname(
-                os.path.abspath(__file__),
+                os.path.dirname(
+                    os.path.abspath(__file__),
+                ),
             ),
         ),
-    ),
-    'dataset',
-)
-print(folder_path)
+        'dataset',
+    )
 
-blur_url = 'https://storage.googleapis.com/kaggle-data-sets/270005/579020/bundle/archive.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1580744780&Signature=Kr6SiZWo9gr1gPKiEjfi57zJUxhpDMS0TMLF27eSRcmMIeG3imF%2FjRtTCunZw4isKWbB%2BsWnQIeEN6nNKz6unLxkYbxCnu5z8kc%2FxVNNcganxaDLEEWHN%2F0PYt1M4kJp37up2gZuuF8%2BtpGKQ%2B0To8o1HlQ4qoJjv73bSy1lrrz1GFtgAyje4WsMq0l0wdoBYnsXLRDRPvewy7%2FZpYd9rsyrSUq3HH2OkZoyeisWKalxxEVG0AwbN6Ue31GKnZKSfrQs28IcJST9povRxUJLc7V9zZ6pPzJ5%2F3he8b2ZW31sBzQ6KrQtt9X6vx2oSSrYg7FWyT4nfIEMpDuuv20Ulw%3D%3D&response-content-disposition=attachment%3B+filename%3Dblur-dataset.zip'
-blur_path = os.path.join(folder_path, 'blur.zip')
-print(blur_path)
-# Create Dataset folder if not exists
-if (not os.path.exists(folder_path)):
-    os.mkdir(folder_path)
+    # Create Dataset folder if not exists
+    if (not os.path.exists(folder_path)):
+        os.mkdir(folder_path)
 
-# download chalearn appa-real dataset
-if (not (os.path.exists(blur_path) and os.path.isfile(blur_path))):
-    resp = requests.get(blur_url, stream=True)
+    return folder_path
 
-    total_size = int(resp.headers.get('content-length', 0))
-    block_size = 16384
-    progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
 
-    with open(blur_path, 'wb') as stream_file:
-        for block in resp.iter_content(block_size):
-            progress_bar.update(len(block))
-            stream_file.write(block)
+def download(src_url, download_path):
+    """
+    Download the file at src_url and stores it at download_path.
 
-        progress_bar.close()
-        stream_file.close()
+    Args:
+        src_url (str): URL from where pull the file
+        download_path (str): Local path for store the downloaded file
 
-        if total_size != 0 and progress_bar.n != total_size:
-            print('Download Error')
+    Returns:
+        True if file was downloaded, False otherwise
 
-    # Extract
-    with zipfile.ZipFile(blur_path, 'r') as compressed:
-        compressed.extractall(folder_path)
-        compressed.close()
+    """
+    if (not (os.path.exists(download_path) and os.path.isfile(download_path))):
+        resp = requests.get(src_url, stream=True)
+
+        total_size = int(resp.headers.get('content-length', 0))
+        block_size = 16384
+        progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
+
+        with open(download_path, 'wb') as stream_file:
+            for block in resp.iter_content(block_size):
+                progress_bar.update(len(block))
+                stream_file.write(block)
+
+            progress_bar.close()
+            stream_file.close()
+
+            if (total_size != 0 and progress_bar.n != total_size):
+                return False
+
+            return True
+
+    return False
+
+
+def extract(file_path, extract_path):
+    """
+    Extract if exists.
+
+    Args:
+        file_path (str): Path of the file to be extracted
+        extract_path (str): Path to copy the extracted files
+
+    Returns:
+        True if extracted successfully, False otherwise
+
+    """
+    if (not (os.path.exists(file_path) and os.path.isfile(file_path))):
+        with zipfile.ZipFile(file_path, 'r') as compressed:
+            compressed.extractall(extract_path)
+            compressed.close()
+
+            return True
+
+    return False
+
+
+if (__name__ == '__main__'):
+    folder_path = create_folder()
+
+    # Download link and download path
+    src_url = 'https://storage.googleapis.com/kaggle-data-sets/270005/579020/bundle/archive.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1580744780&Signature=Kr6SiZWo9gr1gPKiEjfi57zJUxhpDMS0TMLF27eSRcmMIeG3imF%2FjRtTCunZw4isKWbB%2BsWnQIeEN6nNKz6unLxkYbxCnu5z8kc%2FxVNNcganxaDLEEWHN%2F0PYt1M4kJp37up2gZuuF8%2BtpGKQ%2B0To8o1HlQ4qoJjv73bSy1lrrz1GFtgAyje4WsMq0l0wdoBYnsXLRDRPvewy7%2FZpYd9rsyrSUq3HH2OkZoyeisWKalxxEVG0AwbN6Ue31GKnZKSfrQs28IcJST9povRxUJLc7V9zZ6pPzJ5%2F3he8b2ZW31sBzQ6KrQtt9X6vx2oSSrYg7FWyT4nfIEMpDuuv20Ulw%3D%3D&response-content-disposition=attachment%3B+filename%3Dblur-dataset.zip'
+    download_path = os.path.join(folder_path, 'blur.zip')
+
+    # download blur-dataset
+    downloaded = download(src_url, download_path)
+
+    # Extract blur-dataset
+    extracted = extract(download_path, folder_path)
