@@ -123,9 +123,7 @@ if (__name__ == '__main__'):
     # download blur-dataset
     if (not download(source_url, download_path)):
         print('Error Downloading the file')
-        break
 
     # Extract blur-dataset
     if (not extract(download_path, folder_path)):
         print('Error Extracting the file')
-        break
