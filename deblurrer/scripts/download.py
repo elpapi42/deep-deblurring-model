@@ -83,6 +83,7 @@ def download(source_url, download_path):
             stream_file.close()
 
             if (total_size != 0 and progress_bar.n != total_size):
+                print(total_size, progress_bar.n)
                 return False
 
             return True
@@ -122,7 +123,9 @@ if (__name__ == '__main__'):
     # download blur-dataset
     if (not download(source_url, download_path)):
         print('Error Downloading the file')
+        break
 
     # Extract blur-dataset
     if (not extract(download_path, folder_path)):
         print('Error Extracting the file')
+        break
