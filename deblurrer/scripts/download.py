@@ -121,9 +121,12 @@ if (__name__ == '__main__'):
     download_path = os.path.join(folder_path, 'blur.zip')
 
     # download blur-dataset
-    if (not download(source_url, download_path)):
-        print('Error Downloading the file')
+    downloaded = download(source_url, download_path)
+    if (not downloaded):
+        print('Error on download or file already downloaded')
 
     # Extract blur-dataset
-    if (not extract(download_path, folder_path)):
-        print('Error Extracting the file')
+    print('Extracting files')
+    if (not extract(download_path, folder_path) or not downloaded):
+        print('Error Extracting the files')
+    print('Extraction succesful')
