@@ -13,4 +13,55 @@ this module must be refactored into a python package,
 where each package module,
 defines the download and extraction logic of each data split.
 
+# You can run this on google colab for get faster downloads speeds
+
 """
+
+import os
+import zipfile
+import requests
+
+from tqdm import tqdm
+
+folder_path = os.path.join(
+    os.path.dirname(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.abspath(__file__),
+            ),
+        ),
+    ),
+    'dataset',
+)
+print(folder_path)
+
+blur_url = 'https://storage.googleapis.com/kaggle-data-sets/270005/579020/bundle/archive.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1580744780&Signature=Kr6SiZWo9gr1gPKiEjfi57zJUxhpDMS0TMLF27eSRcmMIeG3imF%2FjRtTCunZw4isKWbB%2BsWnQIeEN6nNKz6unLxkYbxCnu5z8kc%2FxVNNcganxaDLEEWHN%2F0PYt1M4kJp37up2gZuuF8%2BtpGKQ%2B0To8o1HlQ4qoJjv73bSy1lrrz1GFtgAyje4WsMq0l0wdoBYnsXLRDRPvewy7%2FZpYd9rsyrSUq3HH2OkZoyeisWKalxxEVG0AwbN6Ue31GKnZKSfrQs28IcJST9povRxUJLc7V9zZ6pPzJ5%2F3he8b2ZW31sBzQ6KrQtt9X6vx2oSSrYg7FWyT4nfIEMpDuuv20Ulw%3D%3D&response-content-disposition=attachment%3B+filename%3Dblur-dataset.zip'
+blur_path = os.path.join(folder_path, 'blur.zip')
+print(blur_path)
+# Create Dataset folder if not exists
+if (not os.path.exists(folder_path)):
+    os.mkdir(folder_path)
+
+# download chalearn appa-real dataset
+if (not (os.path.exists(blur_path) and os.path.isfile(blur_path))):
+    resp = requests.get(blur_url, stream=True)
+
+    total_size = int(resp.headers.get('content-length', 0))
+    block_size = 16384
+    progress_bar = tqdm(total=total_size, unit='iB', unit_scale=True)
+
+    with open(blur_path, 'wb') as stream_file:
+        for block in resp.iter_content(block_size):
+            progress_bar.update(len(block))
+            stream_file.write(block)
+
+        progress_bar.close()
+        stream_file.close()
+
+        if total_size != 0 and progress_bar.n != total_size:
+            print('Download Error')
+
+    # Extract
+    with zipfile.ZipFile(blur_path, 'r') as compressed:
+        compressed.extractall(folder_path)
+        compressed.close()
