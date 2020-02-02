@@ -126,11 +126,9 @@ def preprocess():
     # Create Dataset folder if not exists
     #if (not os.path.exists(folder_path)):
     #    os.mkdir(folder_path)
-    
 
 
-
-if (__name__ == '__main__'):
+def execute():
     folder_path = create_folder()
     
     # Download link and download path
@@ -150,3 +148,8 @@ if (__name__ == '__main__'):
         print('Extraction succesful')
     
     preprocess()
+
+
+if (__name__ == '__main__'):
+    execute()
+
