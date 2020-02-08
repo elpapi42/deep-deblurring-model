@@ -22,6 +22,9 @@ import zipfile
 import requests
 
 from tqdm import tqdm
+from kaggle import api
+
+api.dataset_download_cli()
 
 
 def create_folder():
