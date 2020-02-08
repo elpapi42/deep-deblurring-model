@@ -22,9 +22,6 @@ import zipfile
 import requests
 
 from tqdm import tqdm
-from kaggle import api
-
-api.dataset_download_cli()
 
 
 def create_folder():
@@ -111,31 +108,11 @@ def extract(file_path, extract_path):
     return False
 
 
-def preprocess():
-    """Restructure the downloaded data into two folders: sharp and blur."""
-    folder_path = os.path.join(
-        os.path.dirname(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.abspath(__file__),
-                ),
-            ),
-        ),
-        'dataset',
-    )
-
-    print(folder_path)
-
-    # Create Dataset folder if not exists
-    #if (not os.path.exists(folder_path)):
-    #    os.mkdir(folder_path)
-
-
 def execute():
     folder_path = create_folder()
-    
+
     # Download link and download path
-    source_url = 'https://storage.googleapis.com/kaggle-data-sets/270005/579020/bundle/archive.zip?GoogleAccessId=web-data@kaggle-161607.iam.gserviceaccount.com&Expires=1581175497&Signature=d8zlv25W9ZY4%2BOuHOK3JA9w8XBK8GDnViFH6IKbiaPawON%2F1m0UEz5RR7VXxNwX0vl17SAiA9pggpCcGwQpWi%2BZVnGuQV721UkNV3g7LmaSup805uucL1JNEA1NeE4tG0YfodlUK0cz0jU2q21QDMavA02WJWln0mjKgjvCBgdkvvJ1tuLK8GoQ6LzeZQ0tf20ZTy6e%2BmHR%2F2ywU09bD%2Fd%2BLqGv5xzpZt2By2evtjFTBPoZfg1%2FSV6RNJCquu%2FpNBE9JFQaQSEMXUd3LOZ5essZp9JNK7QqKCnfhC5b30fbPlP9pdpVm89QVHLehwFmOM1sgdEa%2FsMtxc6JXwbz4FA%3D%3D&response-content-disposition=attachment%3B+filename%3Dblur-dataset.zip'
+    source_url = 'downlaod'
     download_path = os.path.join(folder_path, 'blur.zip')
 
     # download blur-dataset
@@ -149,10 +126,7 @@ def execute():
         if (not extract(download_path, folder_path)):
             print('Download path does not exists')
         print('Extraction succesful')
-    
-    preprocess()
 
 
 if (__name__ == '__main__'):
     execute()
-
