@@ -4,7 +4,7 @@
 """
 Downloads the kaggle blur dataset training data.
 
-The data must be downloaded to "/dataset/kaggle_blur"
+The data must be downloaded to "/datasets/kaggle_blur"
 
 The module must define the data extraction logic.
 
@@ -15,6 +15,13 @@ The module must define the data extraction logic.
 import os
 
 from kaggle import api
+
+
+def refactor_folder(path):
+    """Refactor dataset folder for be structered as sharp/blurred images."""
+
+    os.rename(os.path.join(path, 'sharp'), os.path.join(path, 'old_sharp'))
+
 
 
 if (__name__ == '__main__'):
@@ -29,7 +36,7 @@ if (__name__ == '__main__'):
                     ),
                 ),
             ),
-            'dataset',
+            'datasets',
         ),
         'kaggle_blur',
     )
@@ -39,3 +46,5 @@ if (__name__ == '__main__'):
         path=folder_path,
         unzip=True,
     )
+
+    refactor_folder(folder_path)
