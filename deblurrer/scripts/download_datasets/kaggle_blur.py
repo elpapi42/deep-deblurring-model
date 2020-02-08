@@ -72,7 +72,7 @@ def refactor_folder(path):
     for motion_image in images:
         os.rename(
             os.path.join(old_motion_path, motion_image),
-            os.path.join(new_blur_path, '{path}.jpg'.format(path=str(int(motion_image.split('_')[0])) + image_count)),
+            os.path.join(new_blur_path, '{path}.jpg'.format(path=str(int(motion_image.split('_')[0]) + image_count)),
         )
 
 
