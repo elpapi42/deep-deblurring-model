@@ -67,6 +67,14 @@ def refactor_folder(path):
             os.path.join(new_blur_path, '{path}.jpg'.format(path=defocus_image.split('_')[0])),
         )
 
+    # Rename everything from motion_blurred to blur and assigning a new id
+    images = os.listdir(old_motion_path)
+    for motion_image in images:
+        os.rename(
+            os.path.join(old_motion_path, motion_image),
+            os.path.join(new_blur_path, '{path}.jpg'.format(path=str(int(motion_image.split('_')[0])) + image_count)),
+        )
+
 
 if (__name__ == '__main__'):
     folder_path = os.path.join(
