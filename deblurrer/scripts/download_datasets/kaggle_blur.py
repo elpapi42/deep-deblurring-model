@@ -20,7 +20,13 @@ from kaggle import api
 def refactor_folder(path):
     """Refactor dataset folder for be structered as sharp/blurred images."""
 
-    os.rename(os.path.join(path, 'sharp'), os.path.join(path, 'old_sharp'))
+    os.rename(
+        os.path.join(path, 'sharp'),
+        os.path.join(path, 'old_sharp'),
+    )
+
+    os.mkdir(os.path.join(path, 'sharp'))
+    os.mkdir(os.path.join(path, 'blur'))
 
 
 
