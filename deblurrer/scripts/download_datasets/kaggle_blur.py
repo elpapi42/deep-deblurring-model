@@ -20,8 +20,10 @@ from kaggle import api
 def refactor_folder(path):
     """Refactor dataset folder for be structered as sharp/blurred images."""
     old_sharp_path = os.path.join(path, 'old_sharp')
+    old_defocus_path = os.path.join(path, 'defocused_blurred')
+    old_motion_path = os.path.join(path, 'motion_blurred')
     new_sharp_path = os.path.join(path, 'sharp')
-    blur_path = os.path.join(path, 'blur')
+    new_blur_path = os.path.join(path, 'blur')
 
     os.rename(
         new_sharp_path,
@@ -29,14 +31,22 @@ def refactor_folder(path):
     )
 
     os.mkdir(new_sharp_path)
-    os.mkdir(blur_path)
+    os.mkdir(new_blur_path)
 
     images = os.listdir(old_sharp_path)
-    for image in images:
+    for sharp_image in images:
         os.rename(
-            os.path.join(old_sharp_path, image),
-            os.path.join(new_sharp_path, image.split('_')[0]),
+            os.path.join(old_sharp_path, sharp_image),
+            os.path.join(new_sharp_path, sharp_image.split('_')[0]),
         )
+
+    images = os.listdir(old_defocus_path)
+    for defocus_image in images:
+        os.rename(
+            os.path.join(old_defocus_path, defocus_image),
+            os.path.join(new_blur_path, defocus_image.split('_')[0]),
+        )
+
 
 
 
