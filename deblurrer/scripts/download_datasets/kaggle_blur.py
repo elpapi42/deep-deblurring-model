@@ -47,7 +47,7 @@ def refactor_folder(path):
     for sharp_image in images:
         os.rename(
             os.path.join(old_sharp_path, sharp_image),
-            os.path.join(new_sharp_path, sharp_image.split('_')[0]),
+            os.path.join(new_sharp_path, '{path}.jpg'.format(path=sharp_image.split('_')[0])),
         )
 
     # Duplicates the sharp images, with its own id
@@ -56,7 +56,7 @@ def refactor_folder(path):
     for source_image in images:
         shutil.copy2(
             os.path.join(new_sharp_path, source_image),
-            os.path.join(new_sharp_path, str(int(source_image) + image_count))
+            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image) + image_count)))
         )
 
     # Rename everything from defocused_blurred to blur only keeping the id
@@ -64,10 +64,8 @@ def refactor_folder(path):
     for defocus_image in images:
         os.rename(
             os.path.join(old_defocus_path, defocus_image),
-            os.path.join(new_blur_path, defocus_image.split('_')[0]),
+            os.path.join(new_blur_path, '{path}.jpg'.format(path=defocus_image.split('_')[0])),
         )
-
-
 
 
 if (__name__ == '__main__'):
