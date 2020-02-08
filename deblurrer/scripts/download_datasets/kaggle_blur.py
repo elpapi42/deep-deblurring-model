@@ -13,26 +13,36 @@ The module must define the data extraction logic.
 """
 
 import os
+import shutil
 
 from kaggle import api
 
 
 def refactor_folder(path):
-    """Refactor dataset folder for be structered as sharp/blurred images."""
+    """
+    Refactor dataset folder for be structered as sharp/blurred images.
+
+    Args:
+        path (str): The path where the function will operate
+
+    """
     old_sharp_path = os.path.join(path, 'old_sharp')
     old_defocus_path = os.path.join(path, 'defocused_blurred')
     old_motion_path = os.path.join(path, 'motion_blurred')
     new_sharp_path = os.path.join(path, 'sharp')
     new_blur_path = os.path.join(path, 'blur')
 
+    # Rename sharp folder to old_sharp
     os.rename(
         new_sharp_path,
         old_sharp_path,
     )
 
+    # Create final dataset folders
     os.mkdir(new_sharp_path)
     os.mkdir(new_blur_path)
 
+    # rename everything from old_sharp to sharp only keeping the image id
     images = os.listdir(old_sharp_path)
     for sharp_image in images:
         os.rename(
@@ -40,6 +50,16 @@ def refactor_folder(path):
             os.path.join(new_sharp_path, sharp_image.split('_')[0]),
         )
 
+    # Duplicates the sharp images, with its own id
+    images = os.listdir(new_sharp_path)
+    image_count = len(images)
+    for source_image in images:
+        shutil.copy2(
+            os.path.join(new_sharp_path, source_image),
+            os.path.join(new_sharp_path, str(int(source_image) + image_count))
+        )
+
+    # Rename everything from defocused_blurred to blur only keeping the id
     images = os.listdir(old_defocus_path)
     for defocus_image in images:
         os.rename(
