@@ -56,7 +56,7 @@ def refactor_folder(path):
     for source_image in images:
         shutil.copy2(
             os.path.join(new_sharp_path, source_image),
-            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image) + image_count)))
+            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image.split('.')[0]) + image_count)))
         )
 
     # Rename everything from defocused_blurred to blur only keeping the id
