@@ -16,6 +16,8 @@ import os
 import shutil
 
 from kaggle import api
+import tensorflow as tf
+import pandas as pd
 
 
 def refactor_folder(path):
@@ -74,6 +76,25 @@ def refactor_folder(path):
             os.path.join(old_motion_path, motion_image),
             os.path.join(new_blur_path, '{path}.jpg'.format(path=str(int(motion_image.split('_')[0]) + image_count))),
         )
+    
+def get_dataset(path):
+    """
+    Generates .csv with sharp/blur image pairs.
+
+    Args:
+        path (str): Path to the sharp/blur folders
+    
+    """
+    sharp_path = os.path.join(path, 'sharp')
+    blur_path = os.path.join(path, 'blur')
+
+    sharp_list = os.listdir(sharp_path)
+    blur_list = os.listdir(blur_path)
+
+    dataframe = pd.DataFrame()
+    dataframe['sharp'] = sharp_list
+    dataframe['blur'] = blur_list
+
 
 
 if (__name__ == '__main__'):
