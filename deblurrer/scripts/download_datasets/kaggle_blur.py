@@ -16,7 +16,6 @@ import os
 import shutil
 
 from kaggle import api
-import tensorflow as tf
 import pandas as pd
 
 
@@ -96,6 +95,8 @@ def generate_csv(path):
     dataframe['sharp'] = sharp_list
     dataframe['blur'] = blur_list
 
+    print(dataframe.head())
+
 
 
 if (__name__ == '__main__'):
@@ -122,3 +123,5 @@ if (__name__ == '__main__'):
     )
 
     refactor_folder(folder_path)
+
+    generate_csv(folder_path)
