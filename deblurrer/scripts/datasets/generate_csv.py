@@ -80,41 +80,5 @@ def run():
         dataset.to_csv(csv_path, index=None)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    """
-    
-
-    
-
-   
-
-    # loads, updates and writes the new gen dataframe to the full dataset csv
-    
-        dataset = pd.read_csv(csv_path)
-        dataset.append(dataframe)
-        dataset.to_csv(csv_path, index=None)
-    else:
-        dataframe.to_csv(csv_path, index=None)
-    """
-
 if (__name__ == '__main__'):
     run()
