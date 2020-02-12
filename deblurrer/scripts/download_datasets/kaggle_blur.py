@@ -76,8 +76,9 @@ def refactor_folder(path):
             os.path.join(old_motion_path, motion_image),
             os.path.join(new_blur_path, '{path}.jpg'.format(path=str(int(motion_image.split('_')[0]) + image_count))),
         )
-    
-def get_dataset(path):
+
+
+def generate_csv(path):
     """
     Generates .csv with sharp/blur image pairs.
 
