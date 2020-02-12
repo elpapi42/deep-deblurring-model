@@ -77,21 +77,16 @@ def refactor_folder(path):
         )
 
 
-def run():
-    """Ren the script."""
+def run(folder_path):
+    """
+    Run the script.
+
+    Args:
+        folder_path (str): Path conting datasets folders.
+
+    """
     folder_path = os.path.join(
-        os.path.join(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.dirname(
-                        os.path.dirname(
-                            os.path.abspath(__file__),
-                        ),
-                    ),
-                ),
-            ),
-            'datasets',
-        ),
+        folder_path,
         'kaggle_blur',
     )
 
@@ -105,4 +100,17 @@ def run():
 
 
 if (__name__ == '__main__'):
-    run()
+    folder_path = os.path.join(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.abspath(__file__),
+                    ),
+                ),
+            ),
+        ),
+        'datasets',
+    )
+   
+    run(folder_path)

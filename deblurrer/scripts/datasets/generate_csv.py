@@ -24,28 +24,14 @@ import os
 import pandas as pd
 
 
-def run():
+def run(folder_path):
     """
     Generates .csv with sharp/blur image pairs.
 
     Args:
-        path (str): Path to the sharp/blur folders
+        folder_path (str): Path conting datasets folders.
 
     """
-    # Get the path to the datasets folder
-    folder_path = os.path.join(
-        os.path.dirname(
-            os.path.dirname(
-                os.path.dirname(
-                    os.path.dirname(
-                        os.path.abspath(__file__),
-                    ),
-                ),
-            ),
-        ),
-        'datasets',
-    )
-
     csv_path = os.path.join(folder_path, 'dataset.csv')
 
     if (not (os.path.exists(csv_path) and os.path.isfile(csv_path))):
@@ -72,14 +58,28 @@ def run():
                 dataframe['blur'] = blur_list
                 dataframe['blur'] = os.path.join(blur_path, '') + dataframe['blur']
 
-                # loads, updates and writes the new gen dataframe to the dataset csv
-                if (not dataset.empty):
-                    dataset.append(dataframe)
-                else:
+                # loads, updates and writes the new gen dataframe to the csv
+                if (dataset.empty):
                     dataset = dataframe
+                else:
+                    dataset.append(dataframe)
 
             dataset.to_csv(csv_path, index=None)
 
 
 if (__name__ == '__main__'):
-    run()
+    # Get the path to the datasets folder
+    folder_path = os.path.join(
+        os.path.dirname(
+            os.path.dirname(
+                os.path.dirname(
+                    os.path.dirname(
+                        os.path.abspath(__file__),
+                    ),
+                ),
+            ),
+        ),
+        'datasets',
+    )
+
+    run(folder_path)
