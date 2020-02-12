@@ -103,8 +103,6 @@ def run():
 
     refactor_folder(folder_path)
 
-    generate_csv(folder_path)
-
 
 if (__name__ == '__main__'):
     run()
