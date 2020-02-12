@@ -93,7 +93,9 @@ def generate_csv(path):
 
     dataframe = pd.DataFrame()
     dataframe['sharp'] = sharp_list
+    dataframe['sharp'] = sharp_path + dataframe['sharp']
     dataframe['blur'] = blur_list
+    dataframe['blur'] = blur_path + dataframe['blur']
 
     print(dataframe.head())
 
