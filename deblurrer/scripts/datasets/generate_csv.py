@@ -68,9 +68,9 @@ def run():
                 # Builds dataframe with kaggle blur image pairs paths
                 dataframe = pd.DataFrame()
                 dataframe['sharp'] = sharp_list
-                dataframe['sharp'] = sharp_path + '\\' + dataframe['sharp']
+                dataframe['sharp'] = '{path}\\'.format(path=sharp_path) + dataframe['sharp']
                 dataframe['blur'] = blur_list
-                dataframe['blur'] = blur_path + '\\' + dataframe['blur']
+                dataframe['blur'] = '{path}\\'.format(path=blur_path) + dataframe['blur']
 
                 # loads, updates and writes the new gen dataframe to the dataset csv
                 if (not dataset.empty):
