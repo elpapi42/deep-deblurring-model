@@ -88,17 +88,27 @@ def generate_csv(path):
     sharp_path = os.path.join(path, 'sharp')
     blur_path = os.path.join(path, 'blur')
 
+    # Get names of kaggle blur images
     sharp_list = os.listdir(sharp_path)
     blur_list = os.listdir(blur_path)
 
+    # Builds dataframe with kaggle blur image pairs paths
     dataframe = pd.DataFrame()
     dataframe['sharp'] = sharp_list
     dataframe['sharp'] = sharp_path + dataframe['sharp']
     dataframe['blur'] = blur_list
     dataframe['blur'] = blur_path + dataframe['blur']
 
-    print(dataframe.head())
+    # Path from where to load/write the master dataset
+    csv_path = os.path.join(os.path.dirname(path), 'dataset.csv')
 
+    # loads, updates and writes the new gen dataframe to the full dataset csv
+    if (os.path.exists(csv_path) and os.path.isfile(csv_path)):
+        dataset = pd.read_csv(csv_path)
+        dataset.append(dataframe)
+        dataset.to_csv(csv_path, index=None)
+    else:
+        dataframe.to_csv(csv_path, index=None)
 
 
 if (__name__ == '__main__'):
