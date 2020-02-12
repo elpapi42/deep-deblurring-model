@@ -60,24 +60,25 @@ def run():
             sharp_path = os.path.join(dset_path, 'sharp')
             blur_path = os.path.join(dset_path, 'blur')
 
-            # Get names of kaggle blur images
-            sharp_list = os.listdir(sharp_path)
-            blur_list = os.listdir(blur_path)
+            if (os.path.isdir(sharp_path) and os.path.isdir(blur_path)):
+                # Get names of kaggle blur images
+                sharp_list = os.listdir(sharp_path)
+                blur_list = os.listdir(blur_path)
 
-            # Builds dataframe with kaggle blur image pairs paths
-            dataframe = pd.DataFrame()
-            dataframe['sharp'] = sharp_list
-            dataframe['sharp'] = sharp_path + '\\' + dataframe['sharp']
-            dataframe['blur'] = blur_list
-            dataframe['blur'] = blur_path + '\\' + dataframe['blur']
+                # Builds dataframe with kaggle blur image pairs paths
+                dataframe = pd.DataFrame()
+                dataframe['sharp'] = sharp_list
+                dataframe['sharp'] = sharp_path + '\\' + dataframe['sharp']
+                dataframe['blur'] = blur_list
+                dataframe['blur'] = blur_path + '\\' + dataframe['blur']
 
-            # loads, updates and writes the new gen dataframe to the full dataset csv
-            if (not dataset.empty):
-                dataset.append(dataframe)
-            else:
-                dataset = dataframe
+                # loads, updates and writes the new gen dataframe to the dataset csv
+                if (not dataset.empty):
+                    dataset.append(dataframe)
+                else:
+                    dataset = dataframe
 
-        dataset.to_csv(csv_path, index=None)
+            dataset.to_csv(csv_path, index=None)
 
 
 if (__name__ == '__main__'):
