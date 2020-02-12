@@ -18,7 +18,7 @@ with open(os.path.join(requirements_folder, 'production.txt')) as pro:
 setup(
     author='Deep Learning Research Team',
     #author_email='',
-    name='deep-deblurring',
+    name='deepdeblurring',
     license='MIT',
     description='Image Deblurring using Deep Learning Architecture',
     version='1.0.0',

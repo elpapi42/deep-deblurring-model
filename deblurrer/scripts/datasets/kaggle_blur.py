@@ -16,6 +16,7 @@ import os
 import shutil
 
 from kaggle import api
+import pandas as pd
 
 
 def refactor_folder(path):
@@ -56,7 +57,7 @@ def refactor_folder(path):
     for source_image in images:
         shutil.copy2(
             os.path.join(new_sharp_path, source_image),
-            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image.split('.')[0]) + image_count)))
+            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image.split('.')[0]) + image_count))),
         )
 
     # Rename everything from defocused_blurred to blur only keeping the id
@@ -76,7 +77,42 @@ def refactor_folder(path):
         )
 
 
+def generate_csv(path):
+    """
+    Generates .csv with sharp/blur image pairs.
+
+    Args:
+        path (str): Path to the sharp/blur folders
+
+    """
+    sharp_path = os.path.join(path, 'sharp')
+    blur_path = os.path.join(path, 'blur')
+
+    # Get names of kaggle blur images
+    sharp_list = os.listdir(sharp_path)
+    blur_list = os.listdir(blur_path)
+
+    # Builds dataframe with kaggle blur image pairs paths
+    dataframe = pd.DataFrame()
+    dataframe['sharp'] = sharp_list
+    dataframe['sharp'] = sharp_path + dataframe['sharp']
+    dataframe['blur'] = blur_list
+    dataframe['blur'] = blur_path + dataframe['blur']
+
+    # Path from where to load/write the master dataset
+    csv_path = os.path.join(os.path.dirname(path), 'dataset.csv')
+
+    # loads, updates and writes the new gen dataframe to the full dataset csv
+    if (os.path.exists(csv_path) and os.path.isfile(csv_path)):
+        dataset = pd.read_csv(csv_path)
+        dataset.append(dataframe)
+        dataset.to_csv(csv_path, index=None)
+    else:
+        dataframe.to_csv(csv_path, index=None)
+
+
 if (__name__ == '__main__'):
+
     folder_path = os.path.join(
         os.path.join(
             os.path.dirname(
@@ -100,3 +136,5 @@ if (__name__ == '__main__'):
     )
 
     refactor_folder(folder_path)
+
+    generate_csv(folder_path)

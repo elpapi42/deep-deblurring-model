@@ -1,2 +1,4 @@
 tensorflow-gpu
 kaggle
+pandas
+numpy
