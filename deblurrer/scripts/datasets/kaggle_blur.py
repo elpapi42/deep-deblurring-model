@@ -57,7 +57,7 @@ def refactor_folder(path):
     for source_image in images:
         shutil.copy2(
             os.path.join(new_sharp_path, source_image),
-            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image.split('.')[0]) + image_count)))
+            os.path.join(new_sharp_path, '{path}.jpg'.format(path=str(int(source_image.split('.')[0]) + image_count))),
         )
 
     # Rename everything from defocused_blurred to blur only keeping the id
@@ -83,7 +83,7 @@ def generate_csv(path):
 
     Args:
         path (str): Path to the sharp/blur folders
-    
+
     """
     sharp_path = os.path.join(path, 'sharp')
     blur_path = os.path.join(path, 'blur')
@@ -112,6 +112,7 @@ def generate_csv(path):
 
 
 if (__name__ == '__main__'):
+
     folder_path = os.path.join(
         os.path.join(
             os.path.dirname(
