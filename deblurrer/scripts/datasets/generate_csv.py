@@ -32,9 +32,12 @@ def run(folder_path):
         folder_path (str): Path conting datasets folders.
 
     """
-    csv_path = os.path.join(folder_path, 'dataset.csv')
+    # Storage paths
+    train_path = os.path.join(folder_path, 'train.csv')
+    valid_path = os.path.join(folder_path, 'valid.csv')
+    test_path = os.path.join(folder_path, 'test.csv')
 
-    if (not (os.path.exists(csv_path) and os.path.isfile(csv_path))):
+    if (not (os.path.exists(train_path) and os.path.isfile(train_path))):
         # list possible datasets subfolders
         ds_folders = os.listdir(folder_path)
 
@@ -64,7 +67,16 @@ def run(folder_path):
                 else:
                     dataset.append(dataframe)
 
-            dataset.to_csv(csv_path, index=None)
+            # Split dataset
+            train = dataset.sample(frac=0.75, random_state=124)
+            dataset = dataset.drop(train.index)
+            valid = dataset.sample(frac=0.5, random_state=124)
+            test = dataset.drop(valid.index)
+
+            # Writes to storage
+            train.to_csv(train_path, index=None)
+            valid.to_csv(valid_path, index=None)
+            test.to_csv(test_path, index=None)
 
 
 if (__name__ == '__main__'):
