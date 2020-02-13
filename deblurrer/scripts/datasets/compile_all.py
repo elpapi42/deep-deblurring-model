@@ -8,7 +8,7 @@ Run all the available download scripts.
 
 import os
 
-from deblurrer.scripts.datasets import generate_csv, kaggle_blur
+from deblurrer.scripts.datasets import generate_csv, generate_tfrecords, kaggle_blur
 
 
 def run(folder_path):
@@ -26,6 +26,9 @@ def run(folder_path):
 
     # Generate csv
     generate_csv.run(folder_path)
+
+    # Generate TFRecords
+    generate_tfrecords.run(folder_path)
 
 
 if (__name__ == '__main__'):
