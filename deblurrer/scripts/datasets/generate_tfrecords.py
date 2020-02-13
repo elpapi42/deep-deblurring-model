@@ -24,6 +24,7 @@ def image_example(sharp, blur):
 
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
+
 def generate_tfrecord(path, csv_name):
     """
     Generates a tfrecord from a csv with sharp/blur paths.
