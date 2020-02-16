@@ -108,6 +108,23 @@ def get_dataset_from_tfrecord(path, name, batch_size=8):
 
     return dataset
 
+def get_interleave_dataset(path, name):
+    """
+    Returns an interleaved dataset.
+
+    The dataset is composed of severals datasets
+    named with suffix=name. Ex:
+
+    train_01.tfrecords
+    train_02.tfrecords
+
+    with name='train'
+
+    will load all the tfrecords suffixed with 'train' and interleave them
+
+    """
+    pass
+
 import time
 
 def benchmark(dataset, num_epochs=2):
