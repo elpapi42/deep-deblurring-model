@@ -33,7 +33,6 @@ def parse(example):
     blur = tf.image.resize_with_pad(blur, 1024, 1024)
 
     example = tf.stack([sharp, blur])
-    example = example / 256.0
 
     return example
 
@@ -52,11 +51,12 @@ def transform(example):
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
 
     example = tf.stack([sharp, blur])
+    example = example / 256.0
     
     return example
 
 
-def get_dataset(path, name, batch_size=8):
+def get_dataset_from_tfrecord(path, name, batch_size=8):
     """
     Return the fully transformed version of the dataset.
 
@@ -110,8 +110,8 @@ if (__name__ == '__main__'):
         'datasets',
     )
 
-    dataset = get_dataset(folder_path, batch_size=8)
+    dataset = get_dataset_from_tfrecord(folder_path, 'test', batch_size=8)
 
-    benchmark(dataset, num_epochs=10)
+    benchmark(dataset, num_epochs=1)
 
         
