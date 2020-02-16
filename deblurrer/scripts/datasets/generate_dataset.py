@@ -16,7 +16,18 @@ import seaborn as sn
 
 
 def parse(example):
-    """Parse single example from tfrecord to actual image."""
+    """
+    Parse single example from tfrecord to actual image.
+
+    this fn operates over a single sharp/blur pair
+    if you know how to vectorize this, colaborate
+
+    Args:
+        example (tf.Tensor): sharp/blur tfrecord encoded strings
+
+    Return: fully parsed, decoded and loaded sharp/blur pair(Rank 4)
+    
+    """
     feature_properties = {
         'sharp': tf.io.FixedLenFeature([], tf.string),
         'blur': tf.io.FixedLenFeature([], tf.string),
@@ -36,11 +47,22 @@ def parse(example):
 
     return example
 
+
 def transform(example):
-    """Transform an example from TFRecordDataset to be usable."""
-    # Swaps batch dimension to be second
-    example = tf.transpose(example, [1, 0, 2, 3, 4])
+    """
+    Applies transforms to a batch of sharp/blur pairs.
+
+    This fn is vectorized
+
+    Args:
+        example (tf.Tensor): ully parsed, decoded and loaded sharp/blur pair
+
+    Returns: batch of transformed sharp/blur pairs tensor(Rank 5)
     
+    """
+    # Swaps batch dimension to be second, this make calcs easier in the future
+    example = tf.transpose(example, [1, 0, 2, 3, 4])
+
     sharp, blur = tf.unstack(example)
 
     # Generates a random resolution
@@ -51,8 +73,10 @@ def transform(example):
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
 
     example = tf.stack([sharp, blur])
+
+    # Scales to 0.0 - 1.0 range
     example = example / 256.0
-    
+
     return example
 
 
