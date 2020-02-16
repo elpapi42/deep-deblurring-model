@@ -56,13 +56,31 @@ def transform(example):
     return example
 
 
-def get_dataset(folder_path, batch_size=8):
-    """Return the fully transformed version of the dataset."""
-    dataset = tf.data.TFRecordDataset(os.path.join(folder_path, 'test.tfrecords'))
+def get_dataset(path, name, batch_size=8):
+    """
+    Return the fully transformed version of the dataset.
+
+    Args:
+        path (str): path to the folder containing the tfrecord to load
+        name (str): name of the tfrecord to load w/o .tfrecord extension
+        batch_size (int): size of the batch
+
+    Returns:
+        tf.data.Dataset with the full load and tranform pipeline
+    
+    """
+    dataset = tf.data.TFRecordDataset(
+        os.path.join(path, '{name}.tfrecords'.format(name=name)),
+    )
+
     dataset = dataset.map(parse, num_parallel_calls=tf.data.experimental.AUTOTUNE)
     dataset = dataset.batch(batch_size)
     dataset = dataset.map(transform, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-    dataset = dataset.cache(os.path.join(folder_path, 'data.tfcache'))
+
+    # Cache previous transformations into a file at the same dir than .tfrecord
+    dataset = dataset.cache(
+        os.path.join(path, '{name}.tfcache'.format(name=name)),
+    )
 
     return dataset
 
