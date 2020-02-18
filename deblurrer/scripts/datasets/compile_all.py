@@ -8,27 +8,28 @@ Run all the available download scripts.
 
 import os
 
-from deblurrer.scripts.datasets import generate_csv, generate_tfrecord, kaggle_blur
+from deblurrer.scripts.datasets import generate_csv, generate_tfrecord
+from deblurrer.scripts.datasets import kaggle_blur
 
 
-def run(folder_path):
+def run(path):
     """
     Run all the datasets download scripts.
 
     Generates .csv and .tfrecords
 
     Args:
-        folder_path (str): Path conting datasets folders.
+        path (str): Path conting datasets folders.
 
     """
     # Starts the downloads
-    kaggle_blur.run(folder_path)
+    kaggle_blur.run(path)
 
     # Generate csv
-    generate_csv.run(folder_path)
+    generate_csv.run(path)
 
     # Generate TFRecords
-    generate_tfrecords.run(folder_path)
+    generate_tfrecord.run(path)
 
 
 if (__name__ == '__main__'):
