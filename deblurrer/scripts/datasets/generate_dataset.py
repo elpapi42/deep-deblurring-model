@@ -97,9 +97,9 @@ def get_dataset_from_tfrecord(path, batch_size):
 
     """
     dataset = tf.data.TFRecordDataset(path)
-    dataset = dataset.map(parse, num_parallel_calls=1)
+    dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.map(transform, num_parallel_calls=1)
+    dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
 
     # Cache previous transformations into a file at the same dir than .tfrecord
     #dataset = dataset.cache(
@@ -143,10 +143,10 @@ def get_interleave_dataset(path, name, batch_size=8):
     tfrecs = tf.data.Dataset.from_tensor_slices((tfrecs, batch_size))
     tfrecs = tfrecs.interleave(
         get_dataset_from_tfrecord,
-        cycle_length=1,
-        num_parallel_calls=1,
+        cycle_length=AUTOTUNE,
+        num_parallel_calls=AUTOTUNE,
     )
-    tfrecs = tfrecs.prefetch(1)
+    tfrecs = tfrecs.prefetch(AUTOTUNE)
 
     return tfrecs
 
