@@ -118,6 +118,9 @@ def run(path):
 
     # Only executes if the tfrecords folder is not there
     if (not (os.path.exists(tfrecs_path) and os.path.isdir(tfrecs_path))):
+        # Logs
+        print('Generating TFRecords')
+
         # Make csv folder
         os.mkdir(tfrecs_path)
 
@@ -125,11 +128,20 @@ def run(path):
         csv_files = [['train.csv', 4], ['valid.csv', 1], ['test.csv', 1]]
 
         for csv_name, splits in csv_files:
+            # Logs
+            print('Generating {name} TFRecords'.format(name=csv_name))
+
             # Builds the path of the next csv
             csv_file = os.path.join(os.path.join(path, 'csv'), csv_name)
 
             # Generate the tfrecord
             generate_tfrecord_from_csv(tfrecs_path, csv_file, splits)
+
+        # Logs
+        print('TFRecords succesfully generated')
+    else:
+        # Logs
+        print('TFRecords already generated')
 
 
 if (__name__ == '__main__'):
