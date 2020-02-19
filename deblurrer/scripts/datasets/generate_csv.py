@@ -40,6 +40,9 @@ def run(path):
 
     # Only executes if the csv folder is not there
     if (not (os.path.exists(csv_path) and os.path.isdir(csv_path))):
+        # Logs
+        print('Generating .csv files')
+
         # Make csv folder
         os.mkdir(csv_path)
 
@@ -86,6 +89,12 @@ def run(path):
             train.to_csv(train_path, index=None)
             valid.to_csv(valid_path, index=None)
             test.to_csv(test_path, index=None)
+        
+        # Logs
+        print('.csv files successfully generated')
+    else:
+        # Logs
+        print('.csv files already generated')
 
 
 if (__name__ == '__main__'):
