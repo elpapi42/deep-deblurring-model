@@ -25,46 +25,123 @@ def image_example(sharp, blur):
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
 
-def generate_tfrecord(path, csv_name):
+def generate_tfrecord_from_dataframe(path, df):
     """
-    Generates a tfrecord from a csv with sharp/blur paths.
+    Generate tfrecord from the contents of dataframe.
 
     Args:
-        path (str): From where to load the csv and store the tfrecord
-        csv_name (str): name of the csv file
-
+        path (str): filepath to store .tfrecord file
+        df (pandas.Dataframe): dataframe with sharp/blur image pairs
     """
-    # Compose tfrecord storage path
-    record_path = '{name}.tfrecords'.format(name=csv_name.split('.')[0])
+    with tf.io.TFRecordWriter(path) as writer:
+        for _, columns in df.iterrows():
+            # Open sharp image file
+            with open(columns['sharp'], 'rb') as sharp_file:
+                sharp = sharp_file.read()
 
-    if (not (os.path.exists(record_path) and os.path.isfile(record_path))):
-        # Load csv
-        dataframe = pd.read_csv(os.path.join(path, csv_name))
+            # Open blur image file
+            with open(columns['blur'], 'rb') as blur_file:
+                blur = blur_file.read()
 
-        with tf.io.TFRecordWriter(os.path.join(path, record_path)) as writer:
-            for _, columns in dataframe.iterrows():
-
-                with open(columns['sharp'], 'rb') as sharp_file:
-                    sharp = sharp_file.read()
-                with open(columns['blur'], 'rb') as blur_file:
-                    blur = blur_file.read()
-
-                tf_example = image_example(sharp, blur)
-                writer.write(tf_example.SerializeToString())
+            # Serializes and write to the file
+            tf_example = image_example(sharp, blur)
+            writer.write(tf_example.SerializeToString())
 
 
-def run(folder_path):
+def split_dataframe(df, splits):
     """
-    Generates tfrecords with sharp/blur image pairs.
+    Split dataframe into 'splits' equal parts.
+
+    is possible than the last split is not uniform.
 
     Args:
-        folder_path (str): Path conting .csv files.
+        df (pandas.Dataframe): Dataframe to split
+        splits (int): Number of splits
+
+    Returns: List of dataframe splits
+    """
+    length = int(len(df.index) / splits)
+    chunks = []
+
+    for idx in range(splits):
+        if (idx < splits - 1):
+            chunks.append(
+                df.iloc[idx * length:(idx + 1) * length, :],
+            )
+        else:
+            chunks.append(
+                df.iloc[idx * length:, :],
+            )
+
+    return chunks
+
+
+def generate_tfrecord_from_csv(path, csv, splits=1):
+    """
+    Generate a tfrecord from a csv with sharp/blur pairs.
+
+    Args:
+        path (str): Where to write the resulting tfrecords splits
+        csv (str): csv file path
+        splits (int): Number of parts to split the dataset, default=1
 
     """
-    data_splits = ['train.csv', 'valid.csv', 'test.csv']
+    # Get the name of the csv file, this will be used for name the tfrecords
+    csv_name = os.path.split(csv)[1].split('.')[0]
 
-    for split in data_splits:
-        generate_tfrecord(folder_path, split)
+    # Load and splits dataset
+    df_splits = split_dataframe(pd.read_csv(csv), splits)
+
+    # Writes to disk every csv split as tfrecords files
+    for index, split in enumerate(df_splits):
+        # Sets a path for store the current split
+        store_path = os.path.join(
+            path,
+            '{name}_{id}.tfrecords'.format(name=csv_name, id=index),
+        )
+
+        # If the file does not exist, create it.
+        if (not (os.path.exists(store_path) and os.path.isfile(store_path))):
+            generate_tfrecord_from_dataframe(store_path, split)
+
+
+def run(path):
+    """
+    Run the script.
+
+    Args:
+        path (str): Folder containing tfrecords and csv folders
+
+    """
+    # Folder to store tfrecords splits
+    tfrecs_path = os.path.join(path, 'tfrecords')
+
+    # Only executes if the tfrecords folder is not there
+    if (not (os.path.exists(tfrecs_path) and os.path.isdir(tfrecs_path))):
+        # Logs
+        print('Generating TFRecords')
+
+        # Make csv folder
+        os.mkdir(tfrecs_path)
+
+        # Csv files and its desired split count
+        csv_files = [['train.csv', 4], ['valid.csv', 1], ['test.csv', 1]]
+
+        for csv_name, splits in csv_files:
+            # Logs
+            print('Generating {name} TFRecords'.format(name=csv_name))
+
+            # Builds the path of the next csv
+            csv_file = os.path.join(os.path.join(path, 'csv'), csv_name)
+
+            # Generate the tfrecord
+            generate_tfrecord_from_csv(tfrecs_path, csv_file, splits)
+
+        # Logs
+        print('TFRecords succesfully generated')
+    else:
+        # Logs
+        print('TFRecords already generated')
 
 
 if (__name__ == '__main__'):

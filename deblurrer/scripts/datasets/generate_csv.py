@@ -24,27 +24,39 @@ import os
 import pandas as pd
 
 
-def run(folder_path):
+def run(path):
     """
-    Generates .csv with sharp/blur image pairs.
+    Generate train/valid/test.csv with sharp/blur image pairs.
 
     Args:
-        folder_path (str): Path conting datasets folders.
+        path (str): Path containg datasets folders. csv will be stored here too
 
     """
     # Storage paths
-    train_path = os.path.join(folder_path, 'train.csv')
-    valid_path = os.path.join(folder_path, 'valid.csv')
-    test_path = os.path.join(folder_path, 'test.csv')
+    csv_path = os.path.join(path, 'csv')
+    train_path = os.path.join(csv_path, 'train.csv')
+    valid_path = os.path.join(csv_path, 'valid.csv')
+    test_path = os.path.join(csv_path, 'test.csv')
 
-    if (not (os.path.exists(train_path) and os.path.isfile(train_path))):
+    # Only executes if the csv folder is not there
+    if (not (os.path.exists(csv_path) and os.path.isdir(csv_path))):
+        # Logs
+        print('Generating .csv files')
+
+        # Make csv folder
+        os.mkdir(csv_path)
+
         # list possible datasets subfolders
-        ds_folders = os.listdir(folder_path)
+        ds_folders = os.listdir(path)
+
+        # Ensures there is no tfrecords folder in the list
+        if (ds_folders.count('tfrecords') > 0):
+            ds_folders.pop(ds_folders.index('tfrecords'))
 
         dataset = pd.DataFrame()
 
         for dset in ds_folders:
-            dset_path = os.path.join(folder_path, dset)
+            dset_path = os.path.join(path, dset)
 
             sharp_path = os.path.join(dset_path, 'sharp')
             blur_path = os.path.join(dset_path, 'blur')
@@ -77,6 +89,12 @@ def run(folder_path):
             train.to_csv(train_path, index=None)
             valid.to_csv(valid_path, index=None)
             test.to_csv(test_path, index=None)
+        
+        # Logs
+        print('.csv files successfully generated')
+    else:
+        # Logs
+        print('.csv files already generated')
 
 
 if (__name__ == '__main__'):

@@ -15,7 +15,7 @@ def run(folder_path):
     """
     Run all the datasets download scripts.
 
-    Generates csv.
+    Generates .csv and .tfrecords
 
     Args:
         folder_path (str): Path conting datasets folders.
