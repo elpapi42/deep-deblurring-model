@@ -9,7 +9,6 @@ the tfrecords must be in datasets/ folder
 """
 
 import os
-import re
 import glob
 
 import tensorflow as tf
@@ -84,38 +83,11 @@ def transform(example):
     return example
 
 
-def get_dataset_from_tfrecord(path, batch_size):
+def get_dataset(path, name, batch_size=8):
     """
-    Return the fully transformed version of the dataset.
+    Generate an interleaved dataset.
 
-    Args:
-        path (str): path to the folder containing the tfrecord to load
-        batch_size (int): size of the batch
-
-    Returns:
-        tf.data.Dataset with the full load and tranform pipeline
-
-    """
-    dataset = tf.data.TFRecordDataset(path)
-    dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
-    dataset = dataset.batch(batch_size)
-    dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
-
-    # Cache previous transformations into a file at the same dir than .tfrecord
-    #dataset = dataset.cache(
-    #    tf.strings.join(
-    #        [tf.strings.split(path, '.')[0], tf.constant('.tfcache')],
-    #    ),
-    #)
-
-    return dataset
-
-
-def get_interleave_dataset(path, name, batch_size=8):
-    """
-    Return an interleaved dataset.
-
-    The dataset is composed of severals datasets
+    The dataset is composed of several tfrecords
     named with suffix=name. Ex:
 
     train_01.tfrecords
@@ -128,8 +100,10 @@ def get_interleave_dataset(path, name, batch_size=8):
     Args:
         path (str): absolute path to the tfrecords folder
         name (str): suffix name to look for tf records
+        batch_size (str): batch size of sub-datasets
 
-    Returns: interleaved dataset composed of all the matching tfrecords
+    Returns:
+        interleaved dataset composed of all the matching tfrecords
 
     """
     # Find all the relevant tfrecord following the name suffix
@@ -137,26 +111,31 @@ def get_interleave_dataset(path, name, batch_size=8):
         '{path}*.tfrecords'.format(path=os.path.join(path, name)),
     )
 
-    batch_size = [batch_size for index in enumerate(tfrecs)]
-    batch_size = tf.cast(batch_size, tf.int64)
+    # Creates a dataset listing out tfrecord files
+    dataset = tf.data.Dataset.from_tensor_slices(tfrecs)
 
-    tfrecs = tf.data.Dataset.from_tensor_slices((tfrecs, batch_size))
-    tfrecs = tfrecs.interleave(
-        get_dataset_from_tfrecord,
+    # Interleave the tfrecord files contents into a single fast dataset
+    dataset = dataset.interleave(
+        lambda tfrec: tf.data.TFRecordDataset(tfrec),
         cycle_length=AUTOTUNE,
         num_parallel_calls=AUTOTUNE,
     )
-    tfrecs = tfrecs.prefetch(AUTOTUNE)
 
-    return tfrecs
+    # Parse, batch and transform
+    dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.batch(batch_size)
+    dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.prefetch(AUTOTUNE)
+
+    return dataset
 
 
 import time
 
 def benchmark(dataset, num_epochs=2):
     start_time = time.perf_counter()
-    for _epoch_num in range(num_epochs):
-        for _sample in dataset:
+    for _ in range(num_epochs):
+        for _ in dataset:
             # Performing a training step
             time.sleep(0.01)
     tf.print("Execution time:", time.perf_counter() - start_time)
@@ -177,7 +156,7 @@ if (__name__ == '__main__'):
         'datasets',
     )
 
-    dataset = get_interleave_dataset(os.path.join(folder_path, 'tfrecords'), 'test', batch_size=8)
-    #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'test.tfrecords'), batch_size=8)
+    dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=16)
+    #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'train_0.tfrecords'), batch_size=16)
 
     benchmark(dataset, 10)
