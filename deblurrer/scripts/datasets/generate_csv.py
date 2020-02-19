@@ -26,7 +26,7 @@ import pandas as pd
 
 def run(path):
     """
-    Generates .csv with sharp/blur image pairs.
+    Generate train/valid/test.csv with sharp/blur image pairs.
 
     Args:
         path (str): Path containg datasets folders. csv will be stored here too
