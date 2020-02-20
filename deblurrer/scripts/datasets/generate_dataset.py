@@ -187,4 +187,4 @@ if (__name__ == '__main__'):
 
     dataset = dataset.repeat()
 
-    timeit(dataset, 100, batch_size=8)
+    timeit(dataset, 1, batch_size=8)
