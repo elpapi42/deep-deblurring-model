@@ -77,26 +77,29 @@ def refactor_folder(path):
         )
 
 
-def run(folder_path):
+def run(path):
     """
     Run the script.
 
     Args:
-        folder_path (str): Path conting datasets folders.
+        path (str): Path to download dataset files.
 
     """
-    folder_path = os.path.join(
-        folder_path,
+    # Logs
+    print('Downloading kaggle_blur')
+    
+    path = os.path.join(
+        path,
         'kaggle_blur',
     )
 
     api.dataset_download_cli(
         'kwentar/blur-dataset',
-        path=folder_path,
+        path=path,
         unzip=True,
     )
 
-    refactor_folder(folder_path)
+    refactor_folder(path)
 
 
 if (__name__ == '__main__'):
