@@ -117,7 +117,8 @@ def get_dataset(path, name, batch_size=8):
     # Interleave the tfrecord files contents into a single fast dataset
     dataset = dataset.interleave(
         lambda tfrec: tf.data.TFRecordDataset(tfrec),
-        cycle_length=AUTOTUNE,
+        cycle_length=len(tfrecs),
+        block_length=batch_size,
         num_parallel_calls=AUTOTUNE,
     )
 
@@ -125,6 +126,7 @@ def get_dataset(path, name, batch_size=8):
     dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
     dataset = dataset.batch(batch_size)
     dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.cache(path)
     dataset = dataset.prefetch(AUTOTUNE)
 
     return dataset
@@ -156,7 +158,7 @@ if (__name__ == '__main__'):
         'datasets',
     )
 
-    dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=16)
+    dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=8)
     #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'train_0.tfrecords'), batch_size=16)
 
     benchmark(dataset, 10)
