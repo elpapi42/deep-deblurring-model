@@ -16,7 +16,7 @@ import pandas as pd
 
 
 def image_example(sharp, blur):
-    """Create a dictionary with sharp and blur images."""
+    """Create a tf example with sharp and blur images."""
     feature = {
         'sharp': tf.train.Feature(bytes_list=tf.train.BytesList(value=[sharp])),
         'blur': tf.train.Feature(bytes_list=tf.train.BytesList(value=[blur])),
