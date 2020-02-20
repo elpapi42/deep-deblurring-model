@@ -111,6 +111,8 @@ def get_dataset(path, name, batch_size=8):
         '{path}*.tfrecords'.format(path=os.path.join(path, name)),
     )
 
+    print(path)
+
     # Creates a dataset listing out tfrecord files
     dataset = tf.data.Dataset.from_tensor_slices(tfrecs)
 
@@ -126,7 +128,7 @@ def get_dataset(path, name, batch_size=8):
     dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
     dataset = dataset.batch(batch_size)
     dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
-    dataset = dataset.cache(path)
+    dataset = dataset.cache(os.path.join(path, name))
     dataset = dataset.prefetch(AUTOTUNE)
 
     return dataset
@@ -141,6 +143,20 @@ def benchmark(dataset, num_epochs=2):
             # Performing a training step
             time.sleep(0.01)
     tf.print("Execution time:", time.perf_counter() - start_time)
+
+def timeit(ds, steps=1000, batch_size=8):
+    start = time.time()
+    it = iter(ds)
+    for i in range(steps):
+        batch = next(it)
+        if i%10 == 0:
+            print('.',end='')
+    print()
+    end = time.time()
+
+    duration = end-start
+    print("{} batches: {} s".format(steps, duration))
+    print("{:0.5f} Images/s".format(batch_size*steps/duration))
 
 
 if (__name__ == '__main__'):
@@ -161,4 +177,8 @@ if (__name__ == '__main__'):
     dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=8)
     #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'train_0.tfrecords'), batch_size=16)
 
-    benchmark(dataset, 10)
+    benchmark(dataset, 2)
+
+    dataset = dataset.repeat()
+
+    timeit(dataset, 100, batch_size=8)
