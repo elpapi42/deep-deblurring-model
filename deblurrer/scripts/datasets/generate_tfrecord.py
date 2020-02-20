@@ -38,10 +38,16 @@ def generate_tfrecord_from_dataframe(path, df):
             # Open sharp image file
             with open(columns['sharp'], 'rb') as sharp_file:
                 sharp = sharp_file.read()
+                sharp = tf.io.decode_image(sharp, channels=3)
+                sharp = tf.image.resize_with_pad(sharp, 1024, 1024)
+                sharp = tf.io.encode_jpeg(sharp, optimize_size=True)
 
             # Open blur image file
             with open(columns['blur'], 'rb') as blur_file:
                 blur = blur_file.read()
+                blur = tf.io.decode_image(blur, channels=3)
+                blur = tf.image.resize_with_pad(blur, 1024, 1024)
+                blur = tf.io.encode_jpeg(blur, optimize_size=True)
 
             # Serializes and write to the file
             tf_example = image_example(sharp, blur)
