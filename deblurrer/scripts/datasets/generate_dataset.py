@@ -28,8 +28,9 @@ def parse(example):
     Args:
         example (tf.Tensor): sharp/blur tfrecord encoded strings
 
-    Return: fully parsed, decoded and loaded sharp/blur pair(Rank 4)
-    
+    Returns:
+        fully parsed, decoded and loaded sharp/blur pair(Rank 4)
+
     """
     feature_properties = {
         'sharp': tf.io.FixedLenFeature([], tf.string),
@@ -39,12 +40,10 @@ def parse(example):
     example = tf.io.parse_example(example, feature_properties)
 
     # Decode sharp
-    sharp = tf.image.decode_image(example['sharp'])
-    sharp = tf.image.resize_with_pad(sharp, 1024, 1024)
+    sharp = tf.io.decode_image(example['sharp'], expand_animations=False)
 
     # Decode blur
-    blur = tf.image.decode_image(example['blur'])
-    blur = tf.image.resize_with_pad(blur, 1024, 1024)
+    blur = tf.io.decode_image(example['blur'], expand_animations=False)
 
     example = tf.stack([sharp, blur])
 
@@ -53,19 +52,20 @@ def parse(example):
 
 def transform(example):
     """
-    Applies transforms to a batch of sharp/blur pairs.
+    Apply transforms to a batch of sharp/blur pairs.
 
     This fn is vectorized
 
     Args:
         example (tf.Tensor): ully parsed, decoded and loaded sharp/blur pair
 
-    Returns: batch of transformed sharp/blur pairs tensor(Rank 5)
-    
+    Returns:
+        batch of transformed sharp/blur pairs tensor(Rank 5)
+
     """
     # Swaps batch dimension to be second, this make calcs easier in the future
     example = tf.transpose(example, [1, 0, 2, 3, 4])
-
+    
     sharp, blur = tf.unstack(example)
 
     # Generates a random resolution
@@ -76,7 +76,7 @@ def transform(example):
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
 
     example = tf.stack([sharp, blur])
-
+    
     # Scales to 0.0 - 1.0 range
     example = example / 256.0
 
@@ -111,8 +111,6 @@ def get_dataset(path, name, batch_size=8):
         '{path}*.tfrecords'.format(path=os.path.join(path, name)),
     )
 
-    print(path)
-
     # Creates a dataset listing out tfrecord files
     dataset = tf.data.Dataset.from_tensor_slices(tfrecs)
 
@@ -127,12 +125,12 @@ def get_dataset(path, name, batch_size=8):
     # Parse, batch and transform
     dataset = dataset.map(parse, num_parallel_calls=AUTOTUNE)
     dataset = dataset.batch(batch_size)
-    dataset = dataset.map(transform, num_parallel_calls=AUTOTUNE)
+    dataset = dataset.map(transform)
 
     # Cache transforms
-    dataset = dataset.cache(
-        os.path.join(path, '{name}_cache'.format(name=name))
-    )
+    #dataset = dataset.cache(
+    #    os.path.join(path, '{name}_cache'.format(name=name)),
+    #)
 
     # Prefetch data
     dataset = dataset.prefetch(AUTOTUNE)
@@ -183,8 +181,8 @@ if (__name__ == '__main__'):
     dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=8)
     #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'train_0.tfrecords'), batch_size=16)
 
-    #benchmark(dataset, 2)
+    benchmark(dataset, 2)
 
     dataset = dataset.repeat()
 
-    timeit(dataset, 1, batch_size=8)
+    timeit(dataset, 100, batch_size=8)
