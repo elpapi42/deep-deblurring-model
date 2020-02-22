@@ -6,10 +6,13 @@ Reads the tf records and put them into a TFRecordDataset.
 
 the tfrecords must be in datasets/ folder
 
+run this script from bash perform a benchmark of the dataset performane
+
 """
 
 import os
 import glob
+import time
 
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -65,7 +68,7 @@ def transform(example):
     """
     # Swaps batch dimension to be second, this make calcs easier in the future
     example = tf.transpose(example, [1, 0, 2, 3, 4])
-    
+
     sharp, blur = tf.unstack(example)
 
     # Generates a random resolution
@@ -73,17 +76,20 @@ def transform(example):
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
-    blur = tf.image.resize(blur, [rnd_size, rnd_size])
+    sharp = sharp / 256.0
 
-    example = tf.stack([sharp, blur])
-    
-    # Scales to 0.0 - 1.0 range
-    example = example / 256.0
+    blur = tf.image.resize(blur, [rnd_size, rnd_size])
+    blur = blur / 256.0
+
+    example = {
+        'sharp': sharp,
+        'blur': blur,
+    }
 
     return example
 
 
-def get_dataset(path, name, batch_size=8):
+def get_dataset(path, name, batch_size=8, use_cache=False):
     """
     Generate an interleaved dataset.
 
@@ -128,9 +134,10 @@ def get_dataset(path, name, batch_size=8):
     dataset = dataset.map(transform)
 
     # Cache transforms
-    #dataset = dataset.cache(
-    #    os.path.join(path, '{name}_cache'.format(name=name)),
-    #)
+    if (use_cache):
+        dataset = dataset.cache(
+            os.path.join(path, '{name}_cache'.format(name=name)),
+        )
 
     # Prefetch data
     dataset = dataset.prefetch(AUTOTUNE)
@@ -138,29 +145,43 @@ def get_dataset(path, name, batch_size=8):
     return dataset
 
 
-import time
-
-def benchmark(dataset, num_epochs=2):
+def epoch_time(dataset, num_epochs=1):
     start_time = time.perf_counter()
     for _ in range(num_epochs):
         for _ in dataset:
             # Performing a training step
-            time.sleep(0.01)
-    tf.print("Execution time:", time.perf_counter() - start_time)
+            pass
+    tf.print("Execution time for first epoch:", time.perf_counter() - start_time)
 
-def timeit(ds, steps=1000, batch_size=8):
+
+def n_batch_time(ds, steps=1000, batch_size=8):
     start = time.time()
     it = iter(ds)
     for i in range(steps):
         batch = next(it)
-        if i%10 == 0:
-            print('.',end='')
-    print()
     end = time.time()
 
     duration = end-start
-    print("{} batches: {} s".format(steps, duration))
+    print("Execution time for {} batches: {} s".format(steps, duration))
     print("{:0.5f} Images/s".format(batch_size*steps/duration))
+
+
+def run(path):
+    """
+    Run the script.
+
+    Run this script from bash perform some benchmarking in the train dataset
+
+    Args:
+        path (str): from where to load tfrecords
+    """
+    dataset = get_dataset(path, 'train', batch_size=8, use_cache=False)
+
+    epoch_time(dataset, 1)
+
+    dataset = dataset.repeat()
+
+    n_batch_time(dataset, 100, batch_size=8)
 
 
 if (__name__ == '__main__'):
@@ -175,14 +196,7 @@ if (__name__ == '__main__'):
                 ),
             ),
         ),
-        'datasets',
+        os.path.join('datasets', 'tfrecords'),
     )
 
-    dataset = get_dataset(os.path.join(folder_path, 'tfrecords'), 'train', batch_size=8)
-    #dataset = get_dataset_from_tfrecord(os.path.join(os.path.join(folder_path, 'tfrecords'), 'train_0.tfrecords'), batch_size=16)
-
-    benchmark(dataset, 2)
-
-    dataset = dataset.repeat()
-
-    timeit(dataset, 100, batch_size=8)
+    run(folder_path)
