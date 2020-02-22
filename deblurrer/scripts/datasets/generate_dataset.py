@@ -76,10 +76,10 @@ def transform(example):
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
-    sharp = sharp / 256.0
+    sharp = sharp / 255.0
 
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
-    blur = blur / 256.0
+    blur = blur / 255.0
 
     example = {
         'sharp': sharp,
