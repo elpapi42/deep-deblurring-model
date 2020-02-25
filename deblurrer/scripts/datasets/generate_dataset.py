@@ -15,8 +15,6 @@ import glob
 import time
 
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import seaborn as sn
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 

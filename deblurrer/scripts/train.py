@@ -5,13 +5,13 @@
 Start the training of the Model Architecture.
 
 This module will eclusively contains training logic.
-
 """
 
 import os
 import time
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
+from deblurrer.model.generator import MobileNetV2Backbone
 
 
 def run(path):
@@ -35,11 +35,13 @@ def run(path):
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
+    model = MobileNetV2Backbone()
+
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(10):
-        print('training')
-        time.sleep(0.001)
+        model(example['blur'])
+
 
 
 if (__name__ == '__main__'):
