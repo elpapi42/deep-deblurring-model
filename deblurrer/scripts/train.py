@@ -37,11 +37,11 @@ def run(path):
     )
 
     # If the machine executing the code has TPUs, use them
-    if (os.environ.get('COLAB_TPU_ADDR') is None):
+    if (True):
         strategy = tf.distribute.MirroredStrategy()
     else:
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
-            tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR')
+            tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
         )
         tf.config.experimental_connect_to_cluster(resolver)
         tf.tpu.experimental.initialize_tpu_system(resolver)
