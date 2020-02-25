@@ -8,7 +8,8 @@ This module will eclusively contains training logic.
 """
 
 import os
-import time
+
+import tensorflow as tf
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import MobileNetV2Backbone
@@ -35,7 +36,21 @@ def run(path):
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
-    model = MobileNetV2Backbone()
+    # If the machine executing the code has TPUs, use them
+    if (os.environ.get('COLAB_TPU_ADDR') is None):
+        strategy = tf.distribute.MirroredStrategy()
+    else:
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
+            tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR')
+        )
+        tf.config.experimental_connect_to_cluster(resolver)
+        tf.tpu.experimental.initialize_tpu_system(resolver)
+
+        strategy = tf.distribute.experimental.TPUStrategy(resolver)
+
+    # Instantiates the model for training
+    with strategy.scope():
+        model = MobileNetV2Backbone()
 
     # Instantiate model and run training
     # Mock training
