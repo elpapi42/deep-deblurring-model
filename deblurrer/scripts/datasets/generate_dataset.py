@@ -15,7 +15,6 @@ import glob
 import time
 
 import tensorflow as tf
-import numpy as np
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -109,6 +108,7 @@ def get_dataset(path, name, batch_size=8, use_cache=False):
         path (str): absolute path to the tfrecords folder
         name (str): suffix name to look for tf records
         batch_size (str): batch size of sub-datasets
+        use_cache (bool): Register transformations on cache file
 
     Returns:
         interleaved dataset composed of all the matching tfrecords
@@ -148,6 +148,7 @@ def get_dataset(path, name, batch_size=8, use_cache=False):
 
 
 def epoch_time(dataset, num_epochs=1):
+    """Benchmark function."""
     start_time = time.perf_counter()
     for _ in range(num_epochs):
         for _ in dataset:
@@ -157,6 +158,7 @@ def epoch_time(dataset, num_epochs=1):
 
 
 def n_batch_time(ds, steps=1000, batch_size=8):
+    """Benchmark function."""
     start = time.time()
     it = iter(ds)
     for i in range(steps):
