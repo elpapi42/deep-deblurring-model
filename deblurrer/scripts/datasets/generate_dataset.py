@@ -15,6 +15,7 @@ import glob
 import time
 
 import tensorflow as tf
+import numpy as np
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -70,7 +71,8 @@ def transform(example):
     sharp, blur = tf.unstack(example)
 
     # Generates a random resolution
-    rnd_size = tf.random.uniform([], minval=256, maxval=1440)
+    size_bucket = [256, 512, 1024, 1440]
+    rnd_size = size_bucket[np.random.randint(0, 4)]
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])

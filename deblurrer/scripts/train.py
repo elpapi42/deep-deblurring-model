@@ -10,6 +10,7 @@ This module will eclusively contains training logic.
 import os
 
 import tensorflow as tf
+import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import MobileNetV2Backbone
@@ -61,8 +62,9 @@ def run(path):
 
     # Instantiate model and run training
     # Mock training
-    for example in train_dataset.take(1):
-        print(model(example['blur']))
+    for example in train_dataset.take(2):
+        print(np.shape(example['blur']))
+        print(np.shape(model(example['blur'])))
 
 
 
