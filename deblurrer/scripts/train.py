@@ -54,7 +54,7 @@ def run(path):
 
     # Instantiate model and run training
     # Mock training
-    for example in train_dataset.take(10):
+    for example in train_dataset.take(1):
         model(example['blur'])
 
 
