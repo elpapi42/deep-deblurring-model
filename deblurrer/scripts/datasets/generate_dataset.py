@@ -70,9 +70,11 @@ def transform(example):
 
     sharp, blur = tf.unstack(example)
 
-    # Generates a random resolution
-    size_bucket = [256, 512, 1024, 1440]
-    rnd_size = size_bucket[np.random.randint(0, 4)]
+    # Generates a random resolution multiplier of 256
+    rnd_size = tf.multiply(
+        tf.random.uniform([], 1, 7, dtype=tf.int32),
+        256,
+    )
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])

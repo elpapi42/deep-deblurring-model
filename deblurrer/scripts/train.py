@@ -62,9 +62,9 @@ def run(path):
 
     # Instantiate model and run training
     # Mock training
-    for example in train_dataset.take(2):
+    for example in train_dataset.take(10):
         print(np.shape(example['blur']))
-        print(np.shape(model(example['blur'])))
+        print([out.shape for out in model(example['blur'])])
 
 
 
