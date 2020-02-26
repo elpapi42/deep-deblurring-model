@@ -19,15 +19,15 @@ class MobileNetV2Backbone(Model):
 
     def __init__(
         self,
-        output_index=(4, 39, 84, 119, 153),
-        output_filters=(16, 96, 192, 288, 640),
+        output_index=(27, 45, 72, 107, 151),
+        output_channels=128,
     ):
         """
         Init the Backbone instance.
 
         Args:
             output_index (list): Index of layers that will be backbone output
-            output_filters (list): Number of 1x1 filters for each output conv
+            output_channels (int): Number of out channels for each lateral
         """
         super().__init__()
 
@@ -36,10 +36,10 @@ class MobileNetV2Backbone(Model):
 
         # List of 1x1 Convs for each output
         self.output_convs = []
-        for filters in output_filters:
+        for _ in output_index:
             self.output_convs.append(
                 layers.Conv2D(
-                    filters=filters,
+                    filters=output_channels,
                     kernel_size=1,
                     strides=1,
                     padding='same',
@@ -56,17 +56,17 @@ class MobileNetV2Backbone(Model):
         Returns:
             List of Tensors
         """
-        outputs = self.backbone(inputs)
+        # Collect the raw backbone outputs
+        intakes = self.backbone(inputs)
 
-        for index - 1, (out, conv) in enumerate(zip(outputs, self.output_convs)):
-            x = conv(out)
+        # Will store the transformed backbone outputs
+        outputs = []
 
-            if (index == 0):
-                x_past = self.output_convs[index](outputs[index])
-                x = tf.concat([x, x_past])
+        # Loop over every intake tensor and transform it
+        for intake, conv in zip(intakes, self.output_convs):
+            output = conv(intake)
+            outputs.append(output)
 
-        outputs = [tf.concat([conv(out), ]) for out, conv in ]
-        print(outputs)
         return outputs
 
     def get_backbone(self, output_index):

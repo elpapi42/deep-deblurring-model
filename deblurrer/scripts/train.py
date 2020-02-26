@@ -52,10 +52,17 @@ def run(path):
     with strategy.scope():
         model = MobileNetV2Backbone()
 
+
+    for index, (name, layer) in enumerate([(layer.name, layer.output.shape[-1]) for layer in model.backbone.layers]):
+        print(index, name, layer)
+
+
+
+
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(1):
-        model(example['blur'])
+        print(model(example['blur']))
 
 
 
