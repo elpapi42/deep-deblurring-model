@@ -13,7 +13,7 @@ import tensorflow as tf
 import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.model.generator import MobileNetV2Backbone
+from deblurrer.model.generator import FPN
 
 
 def run(path):
@@ -51,21 +51,13 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = MobileNetV2Backbone()
-
-
-    for index, (name, layer) in enumerate([(layer.name, layer.output.shape[-1]) for layer in model.backbone.layers]):
-        print(index, name, layer)
-
-
-
+        model = FPN()
 
     # Instantiate model and run training
     # Mock training
-    for example in train_dataset.take(10):
+    for example in train_dataset.take(1):
         print(np.shape(example['blur']))
-        print([out.shape for out in model(example['blur'])])
-
+        model(example['blur'])
 
 
 if (__name__ == '__main__'):
