@@ -77,10 +77,10 @@ def transform(example):
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
-    sharp = sharp / 255.0
+    sharp = (sharp - 127.0) / 128.0
 
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
-    blur = blur / 255.0
+    blur = (blur - 127.0) / 128.0
 
     example = {
         'sharp': sharp,
@@ -180,6 +180,9 @@ def run(path):
         path (str): from where to load tfrecords
     """
     dataset = get_dataset(path, 'train', batch_size=8, use_cache=False)
+
+    for exam in dataset.take(1):
+        print(exam['sharp'])
 
     epoch_time(dataset, 1)
 
