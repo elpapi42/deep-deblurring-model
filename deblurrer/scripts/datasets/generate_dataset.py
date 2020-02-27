@@ -15,8 +15,6 @@ import glob
 import time
 
 import tensorflow as tf
-import matplotlib.pyplot as plt
-import seaborn as sn
 
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
@@ -71,8 +69,11 @@ def transform(example):
 
     sharp, blur = tf.unstack(example)
 
-    # Generates a random resolution
-    rnd_size = tf.random.uniform([], minval=256, maxval=1440)
+    # Generates a random resolution multiplier of 256
+    rnd_size = tf.multiply(
+        tf.random.uniform([], 1, 7, dtype=tf.int32),
+        256,
+    )
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
@@ -107,6 +108,7 @@ def get_dataset(path, name, batch_size=8, use_cache=False):
         path (str): absolute path to the tfrecords folder
         name (str): suffix name to look for tf records
         batch_size (str): batch size of sub-datasets
+        use_cache (bool): Register transformations on cache file
 
     Returns:
         interleaved dataset composed of all the matching tfrecords
@@ -146,6 +148,7 @@ def get_dataset(path, name, batch_size=8, use_cache=False):
 
 
 def epoch_time(dataset, num_epochs=1):
+    """Benchmark function."""
     start_time = time.perf_counter()
     for _ in range(num_epochs):
         for _ in dataset:
@@ -155,6 +158,7 @@ def epoch_time(dataset, num_epochs=1):
 
 
 def n_batch_time(ds, steps=1000, batch_size=8):
+    """Benchmark function."""
     start = time.time()
     it = iter(ds)
     for i in range(steps):

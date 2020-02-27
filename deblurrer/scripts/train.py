@@ -5,13 +5,15 @@
 Start the training of the Model Architecture.
 
 This module will eclusively contains training logic.
-
 """
 
 import os
-import time
+
+import tensorflow as tf
+import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
+from deblurrer.model.generator import FPNGenerator
 
 
 def run(path):
@@ -35,11 +37,27 @@ def run(path):
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
+    # If the machine executing the code has TPUs, use them
+    if (True):
+        strategy = tf.distribute.MirroredStrategy()
+    else:
+        resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
+            tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
+        )
+        tf.config.experimental_connect_to_cluster(resolver)
+        tf.tpu.experimental.initialize_tpu_system(resolver)
+
+        strategy = tf.distribute.experimental.TPUStrategy(resolver)
+
+    # Instantiates the model for training
+    with strategy.scope():
+        model = FPNGenerator()
+
     # Instantiate model and run training
     # Mock training
-    for example in train_dataset.take(10):
-        print('training')
-        time.sleep(0.001)
+    for example in train_dataset.take(1):
+        print(np.shape(example['blur']))
+        model(example['blur'])
 
 
 if (__name__ == '__main__'):
