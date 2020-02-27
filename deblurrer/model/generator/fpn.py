@@ -34,17 +34,6 @@ class FPN(Model):
         self.conv_d = FPNConvBlock(channels, 5)
         self.conv_e = FPNConvBlock(channels, 5)
 
-        # Up-Down scalers
-        self.scale_a = layers.UpSampling2D([4, 4], interpolation='bilinear')
-        self.scale_bc = layers.UpSampling2D([2, 2], interpolation='bilinear')
-
-        # Image size restoration layers
-        self.conv_res = ConvBlock(channels, 5)
-        self.conv_up = FPNConvBlock(channels, 5)
-        self.residual_up = layers.UpSampling2D([4, 4], interpolation='bilinear')
-        self.residual_conv = ConvBlock(3, 5, override_activation=True)
-        self.residual_act = layers.Activation('tanh')
-
     def call(self, inputs):
         """
         Forward pass of the FPN Model.
@@ -53,7 +42,7 @@ class FPN(Model):
             inputs (tf.Tensor): blur image w/ shape [bch, h, w, ch]
 
         Returns:
-            Tensor of shape = inputs.shape
+            List of tensors
         """
         outputs = self.backbone(inputs)
 
@@ -64,28 +53,7 @@ class FPN(Model):
         conv_d = self.conv_d([conv_c, outputs[1]])
         conv_e = self.conv_e([conv_d, outputs[0]])
 
-        # Concat a-d outputs channels wise, and feed them to convblock
-        conv_res = self.conv_res(
-            tf.concat(
-                [
-                    self.scale_a(conv_a),
-                    self.scale_bc(conv_b),
-                    self.scale_bc(conv_c),
-                    conv_d,
-                ],
-                axis=-1,
-            ),
-        )
-
-        # Size restoration layers
-        residual = self.conv_up([conv_res, conv_e])
-        residual = self.residual_up(residual)
-        residual = self.residual_conv(residual)
-        residual = self.residual_act(residual)
-
-        outputs = tf.add(inputs, residual)
-
-        return outputs
+        return conv_a, conv_b, conv_c, conv_d, conv_e
 
 
 class ConvBlock(Model):

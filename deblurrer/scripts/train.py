@@ -13,7 +13,7 @@ import tensorflow as tf
 import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.model.generator import FPN
+from deblurrer.model.generator import FPNGenerator
 
 
 def run(path):
@@ -51,7 +51,7 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = FPN()
+        model = FPNGenerator()
 
     # Instantiate model and run training
     # Mock training

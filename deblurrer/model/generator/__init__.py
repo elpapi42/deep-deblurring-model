@@ -10,4 +10,5 @@ like Resnet or Inception
 """
 
 from deblurrer.model.generator.backbone import MobileNetV2Backbone
-from deblurrer.model.generator.fpn import FPN
+from deblurrer.model.generator.fpn import FPN, FPNConvBlock, ConvBlock
+from deblurrer.model.generator.generator import FPNGenerator
