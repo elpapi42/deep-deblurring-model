@@ -9,7 +9,6 @@ Any other Sota Arch can be used
 like Resnet or Inception
 """
 
-import tensorflow as tf
 from tensorflow.keras import layers, Model
 from tensorflow.keras.applications import MobileNetV2
 
