@@ -24,22 +24,23 @@ class LocalDiscriminator(Model):
     each prob maps to a 70x70 patch of the input image
     """
 
-    def __init__(self, kernel_size=4, alpha=0.2):
+    def __init__(self, kernel_size=4, strides=2, alpha=0.2):
         """
         Init the layers of the model.
 
         Args:
             kernel_size (int): Scalar or tuple, size of the kernel windows
+            strides (int): Strides of the convulution
             alpha (float): LeakyReLU alpha param
         """
         super().__init__()
 
-        self.conv_a = LeakyConvBlock(64, kernel_size, alpha)
-        self.conv_b = LeakyConvBlock(128, kernel_size, alpha)
-        self.conv_c = LeakyConvBlock(256, kernel_size, alpha)
-        self.conv_d = LeakyConvBlock(512, kernel_size, alpha)
-        self.conv_e = LeakyConvBlock(512, kernel_size, alpha)
-        self.conv_f = layers.Conv2D(1, kernel_size, padding='same')
+        self.conv_a = LeakyConvBlock(64, kernel_size, strides, alpha, True)
+        self.conv_b = LeakyConvBlock(128, kernel_size, strides, alpha)
+        self.conv_c = LeakyConvBlock(256, kernel_size, strides, alpha)
+        self.conv_d = LeakyConvBlock(512, kernel_size, strides, alpha)
+        self.conv_e = LeakyConvBlock(512, kernel_size, 1, alpha)
+        self.conv_f = layers.Conv2D(1, kernel_size, 1, padding='same')
         self.activation = layers.Activation('sigmoid')
 
     def call(self, inputs):
@@ -61,7 +62,7 @@ class LocalDiscriminator(Model):
 
         outputs = self.activation(outputs)
 
-        return inputs
+        return outputs
 
 
 class LeakyConvBlock(ConvBlock):
@@ -71,6 +72,7 @@ class LeakyConvBlock(ConvBlock):
         self,
         filters,
         kernel_size,
+        strides,
         alpha,
         override_activation=False,
     ):
@@ -80,9 +82,16 @@ class LeakyConvBlock(ConvBlock):
         Args:
             filters (int): Number of filters of the Conv Layer
             kernel_size (int): Scalar or tuple, size of the kernel windows
+            strides (int): Strides of the convulution
             alpha (float): LeakyReLU alpha param
             override_activation (bool): if calculate or not the relu activation
         """
         super().__init__(filters, kernel_size, override_activation)
 
+        self.conv = layers.Conv2D(
+            filters,
+            kernel_size,
+            strides,
+            padding='same',
+        )
         self.relu = layers.LeakyReLU(alpha=alpha)

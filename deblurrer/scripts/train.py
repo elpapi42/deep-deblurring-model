@@ -54,12 +54,16 @@ def run(path):
     with strategy.scope():
         model = FPNGenerator()#LocalDiscriminator()
 
+    model.build(input_shape=(1, 1024, 1024, 3))
+    #print(model.fpn.backbone.backbone.summary())
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(1):
         print(np.shape(example['blur']))
+        print('hola')
         print(model(example['blur']))
 
+    
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder
