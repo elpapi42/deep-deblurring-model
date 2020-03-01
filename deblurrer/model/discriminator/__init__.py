@@ -10,3 +10,4 @@ Other a Global Image Discriminator
 """
 
 from deblurrer.model.discriminator.local import LocalDiscriminator, LeakyConvBlock
+from deblurrer.model.discriminator.dglobal import GlobalDiscriminator
