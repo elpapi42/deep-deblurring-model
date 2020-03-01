@@ -14,6 +14,7 @@ import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import FPNGenerator
+from deblurrer.model.discriminator import LocalDiscriminator, GlobalDiscriminator, DoubleScaleDiscriminator
 
 
 def run(path):
@@ -51,14 +52,16 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = FPNGenerator()
+        model = DoubleScaleDiscriminator()
 
+    #print(model.fpn.backbone.backbone.summary())
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(1):
         print(np.shape(example['blur']))
-        model(example['blur'])
+        print(model(example))
 
+    
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder

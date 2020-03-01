@@ -9,8 +9,7 @@ Any other Sota Arch can be used
 like Resnet or Inception
 """
 
-import tensorflow as tf
-from tensorflow.keras import layers, Model
+from tensorflow.keras import layers, Model, Input
 from tensorflow.keras.applications import MobileNetV2
 
 
@@ -91,4 +90,19 @@ class MobileNetV2Backbone(Model):
         return Model(
             inputs=backbone.inputs,
             outputs=outputs,
+        )
+
+    def get_fake_backbone(self, output_index):
+        inputs = Input(shape=[None, None, 3])
+
+        out_a = layers.Conv2D(filters=8, kernel_size=4, strides=4)(inputs)
+        out_b = layers.Conv2D(filters=16, kernel_size=2, strides=2)(out_a)
+        out_c = layers.Conv2D(filters=32, kernel_size=2, strides=2)(out_b)
+        out_d = layers.Conv2D(filters=64, kernel_size=1, strides=1)(out_c)
+        out_e = layers.Conv2D(filters=128, kernel_size=2, strides=2)(out_d)
+
+        # Build Model
+        return Model(
+            inputs=inputs,
+            outputs=[out_a, out_b, out_c, out_d, out_e],
         )
