@@ -8,7 +8,7 @@ from setuptools import setup, find_packages
 
 requirements_folder = os.path.join(os.path.dirname(__file__), 'requirements/')
 
-with open(os.path.join(requirements_folder, 'production.txt')) as pro:
+with open('requirements.txt') as pro:
     INSTALL_REQUIRES = pro.read()
 
 # This will be enable when project reach production and have a testing suit

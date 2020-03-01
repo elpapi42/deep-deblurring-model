@@ -3,8 +3,6 @@
 
 """Test suit for custom losses module."""
 
-import pytest
-
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
 
 

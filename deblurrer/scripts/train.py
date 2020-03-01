@@ -52,14 +52,14 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = DoubleScaleDiscriminator()
+        model = FPNGenerator()#DoubleScaleDiscriminator()
 
     #print(model.fpn.backbone.backbone.summary())
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(1):
         print(np.shape(example['blur']))
-        print(model(example))
+        print(model(example['blur']))
 
     
 
