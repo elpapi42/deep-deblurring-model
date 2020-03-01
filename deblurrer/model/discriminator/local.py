@@ -52,7 +52,7 @@ class LocalDiscriminator(Model):
             inputs (tf.Tensor): Dict of sharp/blur img w Shape [btch, h, w, ch]
 
         Returns:
-            Probabilities Tensor of shape [batch, heigh, width, 1]
+            Averaged probs of the sharp image to be fake, shape [batch, 1]
         """
         # Concat inputs in channels-wise
         outputs = tf.concat([inputs['sharp'], inputs['blur']], axis=-1)
@@ -67,6 +67,10 @@ class LocalDiscriminator(Model):
 
         # Sigmoid activation function
         outputs = self.activation(outputs)
+
+        # Averages the output patches
+        outputs = tf.math.reduce_mean(outputs, axis=[1, 2, 3])
+        outputs = tf.reshape(outputs, [-1, 1])
 
         return outputs
 
