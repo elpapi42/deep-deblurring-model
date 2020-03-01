@@ -41,6 +41,7 @@ class LocalDiscriminator(Model):
         self.conv_d = LeakyConvBlock(512, kernel_size, strides, alpha)
         self.conv_e = LeakyConvBlock(512, kernel_size, 1, alpha)
         self.conv_f = layers.Conv2D(1, kernel_size, 1, padding='same')
+
         self.activation = layers.Activation('sigmoid')
 
     def call(self, inputs):
@@ -48,18 +49,23 @@ class LocalDiscriminator(Model):
         Forward call of the Model.
 
         Args:
-            inputs (tf.Tensor): Shape [batch, heigh, width, channels]
+            inputs (tf.Tensor): Dict of sharp/blur img w Shape [btch, h, w, ch]
 
         Returns:
             Probabilities Tensor of shape [batch, heigh, width, 1]
         """
-        outputs = self.conv_a(inputs)
+        # Concat inputs in channels-wise
+        outputs = tf.concat([inputs['sharp'], inputs['blur']], axis=-1)
+
+        # Conv feedforward
+        outputs = self.conv_a(outputs)
         outputs = self.conv_b(outputs)
         outputs = self.conv_c(outputs)
         outputs = self.conv_d(outputs)
         outputs = self.conv_e(outputs)
         outputs = self.conv_f(outputs)
 
+        # Sigmoid activation function
         outputs = self.activation(outputs)
 
         return outputs

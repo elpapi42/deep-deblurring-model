@@ -52,16 +52,14 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = FPNGenerator()#LocalDiscriminator()
+        model = LocalDiscriminator()
 
-    model.build(input_shape=(1, 1024, 1024, 3))
     #print(model.fpn.backbone.backbone.summary())
     # Instantiate model and run training
     # Mock training
     for example in train_dataset.take(1):
         print(np.shape(example['blur']))
-        print('hola')
-        print(model(example['blur']))
+        print(model(example))
 
     
 
