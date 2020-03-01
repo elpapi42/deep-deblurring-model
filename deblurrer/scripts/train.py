@@ -14,7 +14,7 @@ import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import LocalDiscriminator, GlobalDiscriminator
+from deblurrer.model.discriminator import LocalDiscriminator, GlobalDiscriminator, DoubleScaleDiscriminator
 
 
 def run(path):
@@ -52,7 +52,7 @@ def run(path):
 
     # Instantiates the model for training
     with strategy.scope():
-        model = GlobalDiscriminator()
+        model = DoubleScaleDiscriminator()
 
     #print(model.fpn.backbone.backbone.summary())
     # Instantiate model and run training
