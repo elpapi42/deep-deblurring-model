@@ -34,9 +34,9 @@ class GlobalDiscriminator(Model):
         self.conv_c = LeakyConvBlock(128, 3, 2, alpha)
         self.conv_d = LeakyConvBlock(256, 3, 2, alpha)
         self.conv_e = LeakyConvBlock(512, 2, 2, alpha)
-        self.conv_f = layers.Conv2D(1, 2, 2, padding='same')
+        self.conv_f = layers.Conv2D(64, 2, 2, padding='same')
 
-        self.flat = layers.Flatten()
+        self.global_pool = layers.GlobalMaxPool2D()
         self.dense = layers.Dense(1, activation='sigmoid')
 
     def call(self, inputs):
@@ -61,7 +61,9 @@ class GlobalDiscriminator(Model):
         outputs = self.conv_f(outputs)
 
         # Sigmoid activation function
-        outputs = self.flat(outputs)
+        print(outputs)
+        outputs = self.global_pool(outputs)
+        print(outputs)
         outputs = self.dense(outputs)
 
         return outputs

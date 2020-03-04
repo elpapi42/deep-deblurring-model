@@ -8,6 +8,7 @@ This module will eclusively contains training logic.
 """
 
 import os
+import time
 
 import tensorflow as tf
 import numpy as np
@@ -23,8 +24,8 @@ def train_step(
     images,
     generator,
     discriminator,
-    generator_optimizer,
-    discriminator_optimizer,
+    gen_optimizer,
+    disc_optimizer,
 ):
     """
     Run a single trining step that update params for both models.
@@ -33,13 +34,27 @@ def train_step(
         images (tf.Tensor): Batch of sharp/blur image pairs
         generator (tf.keras.Model): FPN Generator
         discriminator (tf.keras.Model): DS Discriminator
-        generator_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
-        discriminator_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+        gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
+        disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
     """
-    with tf.GradientTape() as (gen_tape, disc_tape):
+    with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         generated_images = generator(images['blur'], training=True)
 
-        real_output = discriminator(images['sharp'], training=True)
+        # Repeat sharp images for get real disc output
+        sharp_images = {
+            'sharp': images['sharp'],
+            'blur': images['sharp'],
+        }
+
+        print(sharp_images)
+
+        # Stack gen images and sharp images for get fake_output
+        generated_images = {
+            'sharp': images['sharp'],
+            'blur': generated_images,
+        }
+
+        real_output = discriminator(sharp_images, training=True)
         fake_output = discriminator(generated_images, training=True)
 
         gen_loss = generator_loss(fake_output)
@@ -56,12 +71,49 @@ def train_step(
         )
 
     # Apply gradient updates to both models
-    generator_optimizer.apply_gradients(
+    gen_optimizer.apply_gradients(
         zip(gradients_of_generator, generator.trainable_variables),
     )
-    discriminator_optimizer.apply_gradients(
+    disc_optimizer.apply_gradients(
         zip(gradients_of_discriminator, discriminator.trainable_variables),
     )
+
+
+def train(
+    dataset,
+    epochs,
+    generator,
+    discriminator,
+    gen_optimizer,
+    disc_optimizer,
+):
+    """
+    Trining cycle.
+
+    Args:
+        dataset (tf.data.Dataset): Tensorflow dataset with sharp/blur entries
+        epochs (int): Hot many cycles run trought the full dataset
+        generator (tf.keras.Model): FPN Generator
+        discriminator (tf.keras.Model): DS Discriminator
+        gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
+        disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+    """
+    for epoch in range(epochs):
+        start = time.time()
+
+        for image_batch in dataset:
+            train_step(
+                image_batch,
+                generator,
+                discriminator,
+                gen_optimizer,
+                disc_optimizer,
+            )
+
+            print('Time for epoch {epoch} is {secs} secs'.format(
+                epoch=epoch + 1,
+                secs=time.time()-start,
+            ))
 
 
 def run(path):
@@ -97,16 +149,22 @@ def run(path):
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
-    # Instantiates the model for training
-    with strategy.scope():
-        model = FPNGenerator()#DoubleScaleDiscriminator()
+    # Instantiates the models for training
+    #with strategy.scope():
+    generator = FPNGenerator()
+    discriminator = DoubleScaleDiscriminator()
+    gen_optimizer = tf.keras.optimizers.Adam(0.001)
+    disc_optimizer = tf.keras.optimizers.Adam(0.001)
 
-    #print(model.fpn.backbone.backbone.summary())
-    # Instantiate model and run training
-    # Mock training
-    for example in train_dataset.take(1):
-        print(np.shape(example['blur']))
-        print(model(example['blur']))
+    # Run training
+    train(
+        train_dataset,
+        1,
+        generator,
+        discriminator,
+        gen_optimizer,
+        disc_optimizer,
+    )
 
     
 
