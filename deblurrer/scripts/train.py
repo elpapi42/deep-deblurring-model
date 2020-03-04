@@ -14,7 +14,54 @@ import numpy as np
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import LocalDiscriminator, GlobalDiscriminator, DoubleScaleDiscriminator
+from deblurrer.model.discriminator import DoubleScaleDiscriminator
+from deblurrer.model.losses import ragan_ls_loss, generator_loss
+
+
+@tf.function
+def train_step(
+    images,
+    generator,
+    discriminator,
+    generator_optimizer,
+    discriminator_optimizer,
+):
+    """
+    Run a single trining step that update params for both models.
+
+    Args:
+        images (tf.Tensor): Batch of sharp/blur image pairs
+        generator (tf.keras.Model): FPN Generator
+        discriminator (tf.keras.Model): DS Discriminator
+        generator_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
+        discriminator_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+    """
+    with tf.GradientTape() as (gen_tape, disc_tape):
+        generated_images = generator(images['blur'], training=True)
+
+        real_output = discriminator(images['sharp'], training=True)
+        fake_output = discriminator(generated_images, training=True)
+
+        gen_loss = generator_loss(fake_output)
+        disc_loss = ragan_ls_loss(real_output, fake_output)
+
+        # Calculate gradients
+        gradients_of_generator = gen_tape.gradient(
+            gen_loss,
+            generator.trainable_variables,
+        )
+        gradients_of_discriminator = disc_tape.gradient(
+            disc_loss,
+            discriminator.trainable_variables,
+        )
+
+    # Apply gradient updates to both models
+    generator_optimizer.apply_gradients(
+        zip(gradients_of_generator, generator.trainable_variables),
+    )
+    discriminator_optimizer.apply_gradients(
+        zip(gradients_of_discriminator, discriminator.trainable_variables),
+    )
 
 
 def run(path):
