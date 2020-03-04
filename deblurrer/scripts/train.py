@@ -99,9 +99,9 @@ def train(
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
     """
     for epoch in range(epochs):
-        start = time.time()
 
         for image_batch in dataset:
+            print(image_batch['blur'].shape)
             train_step(
                 image_batch,
                 generator,
@@ -109,11 +109,6 @@ def train(
                 gen_optimizer,
                 disc_optimizer,
             )
-
-            print('Time for epoch {epoch} is {secs} secs'.format(
-                epoch=epoch + 1,
-                secs=time.time()-start,
-            ))
 
 
 def run(path):
@@ -151,7 +146,7 @@ def run(path):
 
     # Instantiates the models for training
     #with strategy.scope():
-    generator = FPNGenerator()
+    generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
     discriminator = DoubleScaleDiscriminator()
     gen_optimizer = tf.keras.optimizers.Adam(0.001)
     disc_optimizer = tf.keras.optimizers.Adam(0.001)
@@ -165,7 +160,6 @@ def run(path):
         gen_optimizer,
         disc_optimizer,
     )
-
     
 
 if (__name__ == '__main__'):

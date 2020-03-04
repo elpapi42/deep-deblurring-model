@@ -61,9 +61,7 @@ class GlobalDiscriminator(Model):
         outputs = self.conv_f(outputs)
 
         # Sigmoid activation function
-        print(outputs)
         outputs = self.global_pool(outputs)
-        print(outputs)
         outputs = self.dense(outputs)
 
         return outputs

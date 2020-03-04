@@ -48,7 +48,7 @@ class DoubleScaleDiscriminator(Model):
 
         # Stack and puts batch dim first
         outputs = tf.stack([dglobal, local])
-        outputs = tf.squeeze(outputs)
+        outputs = tf.squeeze(outputs, axis=[-1])
         outputs = tf.transpose(outputs, [1, 0])
 
         return outputs
