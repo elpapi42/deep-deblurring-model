@@ -3,6 +3,8 @@
 
 """Defines the custom loss functions used at train time."""
 
+import tensorflow as tf
+
 
 def ragan_ls_loss(real_pred, fake_pred):
     """
@@ -19,7 +21,12 @@ def ragan_ls_loss(real_pred, fake_pred):
     Returns:
         Total loss over real and fake images
     """
-    return None
+    bin_cross = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+
+    real_loss = bin_cross(tf.ones_like(real_pred), real_pred)
+    fake_loss = bin_cross(tf.zeros_like(fake_pred), fake_pred)
+
+    return real_loss + fake_loss, real_loss, fake_loss
 
 
 def generator_loss(fake_pred):
@@ -40,4 +47,6 @@ def generator_loss(fake_pred):
     Returns:
         Generator three-term loss function output
     """
-    return None
+    bin_cross = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+
+    return bin_cross(tf.ones_like(fake_pred), fake_pred)
