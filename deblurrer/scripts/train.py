@@ -46,8 +46,6 @@ def train_step(
             'blur': images['sharp'],
         }
 
-        print(sharp_images)
-
         # Stack gen images and sharp images for get fake_output
         generated_images = {
             'sharp': images['sharp'],
@@ -59,23 +57,23 @@ def train_step(
 
         # Calculate and scale losses(avoid mixed presicion float16 underflow)
         gen_loss = generator_loss(fake_output)
-        gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
+        #gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
 
         disc_loss = ragan_ls_loss(real_output, fake_output)
-        disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
+        #disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
 
         # Calculate gradients and downscale them
         gen_grads = gen_tape.gradient(
             gen_loss,
             generator.trainable_variables,
         )
-        gen_grads = gen_optimizer.get_unscaled_gradients(gen_grads)
+        #gen_grads = gen_optimizer.get_unscaled_gradients(gen_grads)
 
         disc_grads = disc_tape.gradient(
             disc_loss,
             discriminator.trainable_variables,
         )
-        disc_grads = disc_optimizer.get_unscaled_gradients(disc_grads)
+        #disc_grads = disc_optimizer.get_unscaled_gradients(disc_grads)
 
     # Apply gradient updates to both models
     gen_optimizer.apply_gradients(
@@ -126,8 +124,8 @@ def run(path):
         path (str): path from where to load tfrecords
     """
     # Setup float16 mixed precision
-    policy = mixed_precision.Policy('mixed_float16')
-    mixed_precision.set_policy(policy)
+    #policy = mixed_precision.Policy('mixed_float16')
+    #mixed_precision.set_policy(policy)
 
     # Create train dataset
     train_dataset = get_dataset(
@@ -161,14 +159,17 @@ def run(path):
     discriminator = DoubleScaleDiscriminator()
 
     # Instantiate optimizers with loss scaling
-    gen_optimizer = mixed_precision.LossScaleOptimizer(
-        tf.keras.optimizers.Adam(0.001),
-        loss_scale='dynamic',
-    )
-    disc_optimizer = mixed_precision.LossScaleOptimizer(
-        tf.keras.optimizers.Adam(0.001),
-        loss_scale='dynamic',
-    )
+    gen_optimizer = tf.keras.optimizers.Adam(0.001)
+    #gen_optimizer = mixed_precision.LossScaleOptimizer(
+    #    gen_optimizer,
+    #    loss_scale='dynamic',
+    #)
+
+    disc_optimizer = tf.keras.optimizers.Adam(0.001)
+    #disc_optimizer = mixed_precision.LossScaleOptimizer(
+    #    disc_optimizer,
+    #    loss_scale='dynamic',
+    #)
 
     # Run training
     train(
