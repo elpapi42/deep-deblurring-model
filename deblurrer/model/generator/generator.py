@@ -61,7 +61,7 @@ class FPNGenerator(Model):
                     self.scale_a(fpn_out[0]),
                     self.scale_bc(fpn_out[1]),
                     self.scale_bc(fpn_out[2]),
-                    fpn_out[3],
+                    tf.cast(fpn_out[3], dtype=tf.float32),
                 ],
                 axis=-1,
             ),

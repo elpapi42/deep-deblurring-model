@@ -26,7 +26,7 @@ def ragan_ls_loss(real_pred, fake_pred):
     real_loss = bin_cross(tf.ones_like(real_pred), real_pred)
     fake_loss = bin_cross(tf.zeros_like(fake_pred), fake_pred)
 
-    return real_loss + fake_loss, real_loss, fake_loss
+    return real_loss + fake_loss
 
 
 def generator_loss(fake_pred):

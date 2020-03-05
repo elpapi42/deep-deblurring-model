@@ -11,7 +11,7 @@ import os
 import time
 
 import tensorflow as tf
-import numpy as np
+from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 from deblurrer.model.generator import FPNGenerator
@@ -57,25 +57,32 @@ def train_step(
         real_output = discriminator(sharp_images, training=True)
         fake_output = discriminator(generated_images, training=True)
 
+        # Calculate and scale losses(avoid mixed presicion float16 underflow)
         gen_loss = generator_loss(fake_output)
-        disc_loss = ragan_ls_loss(real_output, fake_output)
+        gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
 
-        # Calculate gradients
-        gradients_of_generator = gen_tape.gradient(
+        disc_loss = ragan_ls_loss(real_output, fake_output)
+        disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
+
+        # Calculate gradients and downscale them
+        gen_grads = gen_tape.gradient(
             gen_loss,
             generator.trainable_variables,
         )
-        gradients_of_discriminator = disc_tape.gradient(
+        gen_grads = gen_optimizer.get_unscaled_gradients(gen_grads)
+
+        disc_grads = disc_tape.gradient(
             disc_loss,
             discriminator.trainable_variables,
         )
+        disc_grads = disc_optimizer.get_unscaled_gradients(disc_grads)
 
     # Apply gradient updates to both models
     gen_optimizer.apply_gradients(
-        zip(gradients_of_generator, generator.trainable_variables),
+        zip(gen_grads, generator.trainable_variables),
     )
     disc_optimizer.apply_gradients(
-        zip(gradients_of_discriminator, discriminator.trainable_variables),
+        zip(disc_grads, discriminator.trainable_variables),
     )
 
 
@@ -118,6 +125,10 @@ def run(path):
     Args:
         path (str): path from where to load tfrecords
     """
+    # Setup float16 mixed precision
+    policy = mixed_precision.Policy('mixed_float16')
+    mixed_precision.set_policy(policy)
+
     # Create train dataset
     train_dataset = get_dataset(
         path,
@@ -144,12 +155,20 @@ def run(path):
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
-    # Instantiates the models for training
     #with strategy.scope():
+    # Instantiates the models for training
     generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
     discriminator = DoubleScaleDiscriminator()
-    gen_optimizer = tf.keras.optimizers.Adam(0.001)
-    disc_optimizer = tf.keras.optimizers.Adam(0.001)
+
+    # Instantiate optimizers with loss scaling
+    gen_optimizer = mixed_precision.LossScaleOptimizer(
+        tf.keras.optimizers.Adam(0.001),
+        loss_scale='dynamic',
+    )
+    disc_optimizer = mixed_precision.LossScaleOptimizer(
+        tf.keras.optimizers.Adam(0.001),
+        loss_scale='dynamic',
+    )
 
     # Run training
     train(
