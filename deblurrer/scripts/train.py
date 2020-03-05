@@ -9,6 +9,7 @@ This module will eclusively contains training logic.
 
 import os
 import time
+from sys import stdout
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -57,10 +58,10 @@ def train_step(
 
         # Calculate and scale losses(avoid mixed presicion float16 underflow)
         gen_loss = generator_loss(fake_output)
-        #gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
+        #scaled_gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
 
         disc_loss = ragan_ls_loss(real_output, fake_output)
-        #disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
+        #scaled_disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
 
         # Calculate gradients and downscale them
         gen_grads = gen_tape.gradient(
@@ -83,6 +84,8 @@ def train_step(
         zip(disc_grads, discriminator.trainable_variables),
     )
 
+    return gen_loss, disc_loss
+
 
 def train(
     dataset,
@@ -103,17 +106,50 @@ def train(
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
     """
-    for epoch in range(epochs):
+    # Metrics
+    gen_train_loss = tf.keras.metrics.Mean(name='gen_train_loss')
+    disc_train_loss = tf.keras.metrics.Mean(name='disc_train_loss')
 
+    for epoch in range(epochs):
+        # Loop over full dataset batches
         for image_batch in dataset:
-            print(image_batch['blur'].shape)
-            train_step(
+            # Exec train step
+            gen_loss, disc_loss = train_step(
                 image_batch,
                 generator,
                 discriminator,
                 gen_optimizer,
                 disc_optimizer,
             )
+
+            gen_train_loss(gen_loss)
+            disc_train_loss(disc_loss)
+
+            # Show epoch results
+            # Collect generator metrics
+            gen_metrics = 'gen_train_loss: {gtl}.'.format(
+                gtl=gen_train_loss.result(),
+            )
+
+            # Collect discrimiantor metrics
+            disc_metrics = 'disc_train_loss: {dtl}.'.format(
+                dtl=disc_train_loss.result(),
+            )
+
+            stdout.write(
+                '\rEpoch {e}: {gen_metrics} {disc_metrics}'.format(
+                    e=epoch,
+                    gen_metrics=gen_metrics,
+                    disc_metrics=disc_metrics,
+                ),
+            )
+            stdout.flush()
+        
+        # Go to next line
+        stdout.write('\n')
+
+        # Reset metrics state
+        gen_train_loss.reset_states()
 
 
 def run(path):
@@ -180,7 +216,7 @@ def run(path):
         gen_optimizer,
         disc_optimizer,
     )
-    
+
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder
