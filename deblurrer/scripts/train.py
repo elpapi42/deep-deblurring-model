@@ -47,13 +47,13 @@ def train_step(
         # Repeat sharp images for get real disc output
         sharp_images = {
             'sharp': images['sharp'],
-            'blur': images['sharp'],
+            'generated': images['sharp'],
         }
 
         # Stack gen images and sharp images for get fake_output
         generated_images = {
             'sharp': images['sharp'],
-            'blur': generated_images,
+            'generated': generated_images,
         }
 
         # Forward pass discriminator with generated and real images

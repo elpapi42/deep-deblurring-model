@@ -44,13 +44,13 @@ class GlobalDiscriminator(Model):
         Forward call of the Model.
 
         Args:
-            inputs (tf.Tensor): Dict of sharp/blur img w Shape [btch, h, w, ch]
+            inputs (tf.Tensor): Dict of sharp/generated img w Shape [btch, h, w, ch]
 
         Returns:
             Probabilities Tensor of shape [batch, 1]
         """
         # Concat inputs in channels-wise
-        outputs = tf.concat([inputs['sharp'], inputs['blur']], axis=-1)
+        outputs = tf.concat([inputs['sharp'], inputs['generated']], axis=-1)
 
         # Conv feedforward
         outputs = self.conv_a(outputs)
