@@ -32,11 +32,14 @@ def train_step(
     Run a single trining step that update params for both models.
 
     Args:
-        images (tf.Tensor): Batch of sharp/blur image pairs
+        images (dict): Batch of sharp/blur image pairs
         generator (tf.keras.Model): FPN Generator
         discriminator (tf.keras.Model): DS Discriminator
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+
+    Returns:
+        Generator and Discriminator losses
     """
     with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
         generated_images = generator(images['blur'], training=True)
@@ -53,6 +56,7 @@ def train_step(
             'blur': generated_images,
         }
 
+        # Forward pass discriminator with generated and real images
         real_output = discriminator(sharp_images, training=True)
         fake_output = discriminator(generated_images, training=True)
 
@@ -92,8 +96,6 @@ def train(
     epochs,
     generator,
     discriminator,
-    gen_optimizer,
-    disc_optimizer,
 ):
     """
     Trining cycle.
@@ -101,10 +103,8 @@ def train(
     Args:
         dataset (tf.data.Dataset): Tensorflow dataset with sharp/blur entries
         epochs (int): Hot many cycles run trought the full dataset
-        generator (tf.keras.Model): FPN Generator
-        discriminator (tf.keras.Model): DS Discriminator
-        gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
-        disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+        generator (dict): Packs gen model and its optimizer
+        discriminator (dict): Packs disc model and its optimizer
     """
     # Metrics
     gen_train_loss = tf.keras.metrics.Mean(name='gen_train_loss')
@@ -116,40 +116,63 @@ def train(
             # Exec train step
             gen_loss, disc_loss = train_step(
                 image_batch,
-                generator,
-                discriminator,
-                gen_optimizer,
-                disc_optimizer,
+                generator=generator.get('model'),
+                discriminator=discriminator.get('model'),
+                gen_optimizer=generator.get('optimizer'),
+                disc_optimizer=discriminator.get('optimizer'),
             )
 
             gen_train_loss(gen_loss)
             disc_train_loss(disc_loss)
 
             # Show epoch results
-            # Collect generator metrics
-            gen_metrics = 'gen_train_loss: {gtl}.'.format(
-                gtl=gen_train_loss.result(),
+            print_metrics(
+                gen_metrics={
+                    'train_loss': gen_train_loss.result(),
+                },
+                disc_metrics={
+                    'train_loss': disc_train_loss.result(),
+                },
+                epoch=epoch,
             )
-
-            # Collect discrimiantor metrics
-            disc_metrics = 'disc_train_loss: {dtl}.'.format(
-                dtl=disc_train_loss.result(),
-            )
-
-            stdout.write(
-                '\rEpoch {e}: {gen_metrics} {disc_metrics}'.format(
-                    e=epoch,
-                    gen_metrics=gen_metrics,
-                    disc_metrics=disc_metrics,
-                ),
-            )
-            stdout.flush()
 
         # Go to next line
         stdout.write('\n')
 
         # Reset metrics state
         gen_train_loss.reset_states()
+        disc_train_loss.reset_states()
+
+
+def print_metrics(gen_metrics, disc_metrics, epoch):
+    """
+    Print models metrics in easy to read format.
+
+    Args:
+        gen_metrics (dict): Generator metrics
+        disc_metrics (dict): Discriminato metrics
+        epoch (int): epoch label
+    """
+    # Collect generator metrics
+    gen_metrics = '[gen_train_loss: {gtl:.6f}]'.format(
+        gtl=gen_metrics.get('train_loss'),
+    )
+
+    # Collect discrimiantor metrics
+    disc_metrics = '[disc_train_loss: {dtl:.6f}]'.format(
+        dtl=disc_metrics.get('train_loss'),
+    )
+
+    stdout.write(
+        '\rEpoch {e}: {gen_metrics} {disc_metrics}'.format(
+            e=epoch,
+            gen_metrics=gen_metrics,
+            disc_metrics=disc_metrics,
+        ),
+    )
+
+    # Flush stdout for inplace reprinting
+    stdout.flush()
 
 
 def run(path):
@@ -190,20 +213,19 @@ def run(path):
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
     #with strategy.scope():
-    # Instantiates the models for training
-    generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
-    discriminator = DoubleScaleDiscriminator()
+    generator = {
+        'model': FPNGenerator(int(os.environ.get('FPN_CHANNELS'))),
+        'optimizer': tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR'))),
+    }
 
-    # Instantiate optimizers with loss scaling
-    gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
+    discriminator = {
+        'model': DoubleScaleDiscriminator(),
+        'optimizer': tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
+    }
+
+    # This will be implemented later, dont delete!
     #gen_optimizer = mixed_precision.LossScaleOptimizer(
     #    gen_optimizer,
-    #    loss_scale='dynamic',
-    #)
-
-    disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
-    #disc_optimizer = mixed_precision.LossScaleOptimizer(
-    #    disc_optimizer,
     #    loss_scale='dynamic',
     #)
 
@@ -213,8 +235,6 @@ def run(path):
         2,
         generator,
         discriminator,
-        gen_optimizer,
-        disc_optimizer,
     )
 
 
