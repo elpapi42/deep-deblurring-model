@@ -144,7 +144,7 @@ def train(
                 ),
             )
             stdout.flush()
-        
+
         # Go to next line
         stdout.write('\n')
 
@@ -195,13 +195,13 @@ def run(path):
     discriminator = DoubleScaleDiscriminator()
 
     # Instantiate optimizers with loss scaling
-    gen_optimizer = tf.keras.optimizers.Adam(0.001)
+    gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
     #gen_optimizer = mixed_precision.LossScaleOptimizer(
     #    gen_optimizer,
     #    loss_scale='dynamic',
     #)
 
-    disc_optimizer = tf.keras.optimizers.Adam(0.001)
+    disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
     #disc_optimizer = mixed_precision.LossScaleOptimizer(
     #    disc_optimizer,
     #    loss_scale='dynamic',
@@ -210,7 +210,7 @@ def run(path):
     # Run training
     train(
         train_dataset,
-        1,
+        2,
         generator,
         discriminator,
         gen_optimizer,
