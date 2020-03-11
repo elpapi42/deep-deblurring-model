@@ -15,7 +15,7 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training.tester import Tester
+from deblurrer.scripts.training import Tester, Trainer
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
@@ -90,13 +90,6 @@ def train_step(
     )
 
     return gen_loss, disc_loss
-
-@tf.function
-def test_step():
-    """
-    Test the Models in a batch of images.
-    """
-    pass
 
 
 def train(
@@ -237,9 +230,8 @@ def run(path):
     #    loss_scale='dynamic',
     #)
 
-    tester = Tester(generator['model'], discriminator['model'])
-    tester.test(valid_dataset, True)
-    tester.test(valid_dataset, True)
+    tester = Trainer(generator['model'], discriminator['model'], generator['optimizer'], discriminator['optimizer'])
+    tester.train(valid_dataset, 2, valid_dataset=valid_dataset, verbose=True)
 
 
 if (__name__ == '__main__'):

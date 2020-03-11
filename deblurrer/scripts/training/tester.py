@@ -64,7 +64,7 @@ class Tester(object):
                 )
 
         # Return mean loss across all the batches
-        return gen_loss_metric.result(), disc_loss_metric.result()
+        return gen_loss_metric, disc_loss_metric
 
     @tf.function
     def test_step(self, images):
