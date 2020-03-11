@@ -36,14 +36,64 @@ class Tester(object):
         self.generator = generator
         self.discriminator = discriminator
 
-    def test(self, dataset):
+    def test(self, dataset, is_eval=False):
         """
         Test the geneator and discriminator against the supplied dataset.
 
         Args:
             dataset (tf.data.Dataset): dataset to test the model
+            is_eval (bool): If this test is model crossvalidation step
 
         Returns:
             loss and metrics
         """
-        return 0.0
+        # Metrics
+        gen_loss_metric = tf.keras.metrics.Mean(name='gen_loss')
+        disc_loss_metric = tf.keras.metrics.Mean(name='disc_loss')
+
+        # Loop over full dataset batches
+        for image_batch in dataset:
+            # Exec test step
+            gen_loss, disc_loss = self.test_step(image_batch)
+
+            gen_loss_metric(gen_loss)
+            disc_loss_metric(disc_loss)
+
+        # Return mean loss across all the batches
+        return gen_loss_metric.result(), disc_loss_metric.result()
+
+    @tf.function
+    def test_step(self, images):
+        """
+        Forward pass images trought model and calculate loss and metrics.
+
+        Args:
+            images (dict): Of Tensors with shape [batch, height, width, chnls]
+
+        Returns:
+            Loss and metrics for this step
+        """
+        # Forward pass generator with blurred images
+        generated_images = self.generator(images['blur'], training=False)
+
+        # Repeat sharp images for get real_output
+        sharp_images = {
+            'sharp': images['sharp'],
+            'generated': images['sharp'],
+        }
+
+        # Stack gen images and sharp images for get fake_output
+        generated_images = {
+            'sharp': images['sharp'],
+            'generated': generated_images,
+        }
+
+        # Forward pass discriminator with generated and real images
+        real_output = self.discriminator(sharp_images, training=False)
+        fake_output = self.discriminator(generated_images, training=False)
+
+        # Calculate and return losses
+        return (
+            generator_loss(fake_output),
+            ragan_ls_loss(real_output, fake_output),
+        )
