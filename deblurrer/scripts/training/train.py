@@ -239,6 +239,7 @@ def run(path):
 
     tester = Tester(generator['model'], discriminator['model'])
     tester.test(valid_dataset, True)
+    tester.test(valid_dataset, True)
 
 
 if (__name__ == '__main__'):

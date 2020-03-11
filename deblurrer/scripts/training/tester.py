@@ -36,17 +36,21 @@ class Tester(object):
         self.generator = generator
         self.discriminator = discriminator
 
-    def test(self, dataset, print_metrics=False):
+    def test(self, dataset, verbose=False):
         """
         Test the geneator and discriminator against the supplied dataset.
 
         Args:
             dataset (tf.data.Dataset): dataset to test the model
-            print_metrics (bool): If output to std out the metrics results
+            verbose (bool): If output to std out the metrics results
 
         Returns:
             loss and metrics
         """
+        # Jump to next line if verbose, for pretty formatting
+        if (verbose):
+            stdout.write('\n')
+
         # Metrics
         gen_loss_metric = tf.keras.metrics.Mean(name='gen_loss')
         disc_loss_metric = tf.keras.metrics.Mean(name='disc_loss')
@@ -59,8 +63,11 @@ class Tester(object):
             gen_loss_metric(gen_loss)
             disc_loss_metric(disc_loss)
 
-            if (print_metrics):
-                self.print_metrics([gen_loss_metric, disc_loss_metric])
+            if (verbose):
+                self.print_metrics(
+                    [gen_loss_metric, disc_loss_metric],
+                    preffix='Test:',
+                )
 
         # Return mean loss across all the batches
         return gen_loss_metric.result(), disc_loss_metric.result()
@@ -103,7 +110,7 @@ class Tester(object):
 
     def print_metrics(self, metrics, preffix=''):
         """
-        Print to std output the supplied Metrics
+        Print to std output the supplied Metrics.
 
         Args:
             metrics (tuple/list): list of tf.keras.metrics to be printed
