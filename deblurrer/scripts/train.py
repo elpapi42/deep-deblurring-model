@@ -91,6 +91,13 @@ def train_step(
     return gen_loss, disc_loss
 
 
+def test_step():
+    """
+    Test the Models in a batch of images.
+    """
+    pass
+
+
 def train(
     dataset,
     epochs,
