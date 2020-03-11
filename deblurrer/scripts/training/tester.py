@@ -7,16 +7,10 @@ Tester class that implements the evaluation and testing behavior.
 This module will eclusively contain test/evaluation logic.
 """
 
-import os
-import time
 from sys import stdout
 
 import tensorflow as tf
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
-from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import DoubleScaleDiscriminator
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
 
 
@@ -83,24 +77,7 @@ class Tester(object):
         Returns:
             Loss and metrics for this step
         """
-        # Forward pass generator with blurred images
-        generated_images = self.generator(images['blur'], training=False)
-
-        # Repeat sharp images for get real_output
-        sharp_images = {
-            'sharp': images['sharp'],
-            'generated': images['sharp'],
-        }
-
-        # Stack gen images and sharp images for get fake_output
-        generated_images = {
-            'sharp': images['sharp'],
-            'generated': generated_images,
-        }
-
-        # Forward pass discriminator with generated and real images
-        real_output = self.discriminator(sharp_images, training=False)
-        fake_output = self.discriminator(generated_images, training=False)
+        real_output, fake_output = self.gan_forward_pass(images)
 
         # Calculate and return losses
         return (
@@ -135,3 +112,35 @@ class Tester(object):
 
         stdout.write('\r{out}'.format(out=output))
         stdout.flush()
+
+    def gan_forward_pass(self, images, training=False):
+        """
+        Forward propagates the supplied batch of images.
+
+        Args:
+            images (dict): Sharp/Blur image batches of 4d tensors
+            training (bool): If th forward pass is part of a training step
+
+        Returns:
+            Output of the GAN
+        """
+        # Forward pass generator with blurred images
+        generated_images = self.generator(images['blur'], training=False)
+
+        # Repeat sharp images for get real_output
+        sharp_images = {
+            'sharp': images['sharp'],
+            'generated': images['sharp'],
+        }
+
+        # Stack gen images and sharp images for get fake_output
+        generated_images = {
+            'sharp': images['sharp'],
+            'generated': generated_images,
+        }
+
+        # Forward pass discriminator with generated and real images
+        return (
+            self.discriminator(sharp_images, training=False),
+            self.discriminator(generated_images, training=False),
+        )
