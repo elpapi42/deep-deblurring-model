@@ -15,6 +15,7 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
+from deblurrer.scripts.training.tester import Tester
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
@@ -236,13 +237,8 @@ def run(path):
     #    loss_scale='dynamic',
     #)
 
-    # Run training
-    train(
-        train_dataset,
-        2,
-        generator,
-        discriminator,
-    )
+    tester = Tester(generator['model'], discriminator['model'])
+    tester.test(valid_dataset, True)
 
 
 if (__name__ == '__main__'):
@@ -251,11 +247,13 @@ if (__name__ == '__main__'):
         os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
-                    os.path.abspath(__file__),
+                    os.path.dirname(
+                        os.path.abspath(__file__),
+                    ),
                 ),
             ),
         ),
         os.path.join('datasets', 'tfrecords'),
     )
-
+    print(path)
     run(path)

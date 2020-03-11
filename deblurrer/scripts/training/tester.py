@@ -36,13 +36,13 @@ class Tester(object):
         self.generator = generator
         self.discriminator = discriminator
 
-    def test(self, dataset, is_eval=False):
+    def test(self, dataset, print_metrics=False):
         """
         Test the geneator and discriminator against the supplied dataset.
 
         Args:
             dataset (tf.data.Dataset): dataset to test the model
-            is_eval (bool): If this test is model crossvalidation step
+            print_metrics (bool): If output to std out the metrics results
 
         Returns:
             loss and metrics
@@ -58,6 +58,9 @@ class Tester(object):
 
             gen_loss_metric(gen_loss)
             disc_loss_metric(disc_loss)
+
+            if (print_metrics):
+                self.print_metrics([gen_loss_metric, disc_loss_metric])
 
         # Return mean loss across all the batches
         return gen_loss_metric.result(), disc_loss_metric.result()
@@ -97,3 +100,31 @@ class Tester(object):
             generator_loss(fake_output),
             ragan_ls_loss(real_output, fake_output),
         )
+
+    def print_metrics(self, metrics, preffix=''):
+        """
+        Print to std output the supplied Metrics
+
+        Args:
+            metrics (tuple/list): list of tf.keras.metrics to be printed
+            preffix (str): String to be concat at the start of the print
+        """
+        # Stores the full metrics strings to be printed
+        output = preffix
+
+        # Iter over supplied metrics
+        for metric in metrics:
+            # Get and format metric data
+            metric_string = '[{name}: {value:.6f}]'.format(
+                name=metric.name,
+                value=metric.result(),
+            )
+
+            # Concat the result to the output string
+            output = '{output} {metric_string}'.format(
+                output=output,
+                metric_string=metric_string,
+            )
+
+        stdout.write('\r{out}'.format(out=output))
+        stdout.flush()
