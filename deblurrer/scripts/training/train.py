@@ -90,7 +90,7 @@ def train_step(
 
     return gen_loss, disc_loss
 
-
+@tf.function
 def test_step():
     """
     Test the Models in a batch of images.
