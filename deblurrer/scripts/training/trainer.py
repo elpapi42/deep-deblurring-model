@@ -25,6 +25,7 @@ class Trainer(Tester):
         discriminator,
         gen_optimizer,
         disc_optimizer,
+        enable_mixed_presicion=False,
     ):
         """
         Init the Trainer required Objects.
@@ -34,11 +35,31 @@ class Trainer(Tester):
             discriminator (tf.keras.Model): DS Discriminator
             gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
             disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+            enable_mixed_presicion (bool): Tensorflow mixed presicion w/ fp16
         """
         super().__init__(generator, discriminator)
 
-        self.gen_optimizer = gen_optimizer
-        self.disc_optimizer = disc_optimizer
+        self.enable_mixed_presicion = enable_mixed_presicion
+
+        # Enable fp16 mixed presicion
+        if (enable_mixed_presicion):
+            # Setup float16 mixed precision
+            policy = mixed_precision.Policy('mixed_float16')
+            mixed_precision.set_policy(policy)
+
+            # Wrap optimizers with loss scaling optimizer
+            self.gen_optimizer = mixed_precision.LossScaleOptimizer(
+                gen_optimizer,
+                loss_scale='dynamic',
+            )
+
+            self.disc_optimizer = mixed_precision.LossScaleOptimizer(
+                disc_optimizer,
+                loss_scale='dynamic',
+            )
+        else:
+            self.gen_optimizer = gen_optimizer
+            self.disc_optimizer = disc_optimizer
 
     def train(self, dataset, epochs, valid_dataset=None, verbose=False):
         """
@@ -110,25 +131,45 @@ class Trainer(Tester):
                 training=True,
             )
 
-            # Calc and scale losses(avoid mixed presicion float16 underflow)
+            # Calc losses
             gen_loss = generator_loss(fake_output)
-            #scaled_gen_loss = gen_optimizer.get_scaled_loss(loss=gen_loss)
-
             disc_loss = ragan_ls_loss(real_output, fake_output)
-            #scaled_disc_loss = disc_optimizer.get_scaled_loss(disc_loss)
+
+            # Scale losses if mixed presicion enabled, avoid float16 underflow
+            if (self.enable_mixed_presicion):
+                gen_loss = self.gen_optimizer.get_scaled_loss(loss=gen_loss)
+                disc_loss = self.disc_optimizer.get_scaled_loss(loss=disc_loss)
 
             # Calculate gradients and downscale them
-            gen_grads = gen_tape.gradient(
-                gen_loss,
-                self.generator.trainable_variables,
-            )
-            #gen_grads = gen_optimizer.get_unscaled_gradients(gen_grads)
+            self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)
 
-            disc_grads = disc_tape.gradient(
-                disc_loss,
-                self.discriminator.trainable_variables,
-            )
-            #disc_grads = disc_optimizer.get_unscaled_gradients(disc_grads)
+        return gen_loss, disc_loss
+
+    def update_weights(self, gen_loss, disc_loss, gen_tape, disc_tape):
+        """
+        Compute gradients and apply them to the models.
+
+        Args:
+            gen_loss (float): generator loss
+            disc_loss (float): discriminator loss
+            gen_tape (tf.GradientTape): tf computations data for gen
+            disc_tape (tf.GradientTape): tf computations data for disc
+        """
+        # Compute Grads for both models
+        gen_grads = gen_tape.gradient(
+            gen_loss,
+            self.generator.trainable_variables,
+        )
+
+        disc_grads = disc_tape.gradient(
+            disc_loss,
+            self.discriminator.trainable_variables,
+        )
+
+        # Scale down the gards if mixed presicion is anbled
+        if (self.enable_mixed_presicion):
+            gen_grads = self.gen_optimizer.get_unscaled_gradients(gen_grads)
+            disc_grads = self.disc_optimizer.get_unscaled_gradients(disc_grads)
 
         # Apply gradient updates to both models
         self.gen_optimizer.apply_gradients(
@@ -137,5 +178,3 @@ class Trainer(Tester):
         self.disc_optimizer.apply_gradients(
             zip(disc_grads, self.discriminator.trainable_variables),
         )
-
-        return gen_loss, disc_loss

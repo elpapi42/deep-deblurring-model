@@ -25,10 +25,6 @@ def run(path):
     Args:
         path (str): path from where to load tfrecords
     """
-    # Setup float16 mixed precision
-    #policy = mixed_precision.Policy('mixed_float16')
-    #mixed_precision.set_policy(policy)
-
     # Create train dataset
     train_dataset = get_dataset(
         path,
@@ -56,12 +52,6 @@ def run(path):
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
     #with strategy.scope():
-
-    # This will be implemented later, dont delete!
-    #gen_optimizer = mixed_precision.LossScaleOptimizer(
-    #    gen_optimizer,
-    #    loss_scale='dynamic',
-    #)
 
     trainer = Trainer(
         FPNGenerator(int(os.environ.get('FPN_CHANNELS'))),
