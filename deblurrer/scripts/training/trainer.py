@@ -7,16 +7,12 @@ Trainer class that defines the gradient descent of the GAN.
 This module will eclusively contain training logic.
 """
 
-import os
-import time
 from sys import stdout
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.training import Tester
-from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import DoubleScaleDiscriminator
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
 
 
@@ -83,8 +79,6 @@ class Trainer(Tester):
             # If thereis validation dataset, do cross validation
             if (valid_dataset):
                 gen_valid_loss, disc_valid_loss = self.test(valid_dataset)
-                gen_valid_loss.name = 'gen_valid_loss'
-                disc_valid_loss.name = 'disc_valid_loss'
                 metrics += [gen_valid_loss, disc_valid_loss]
 
             # Print final metrics of the epoch
