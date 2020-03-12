@@ -135,11 +135,6 @@ class Trainer(Tester):
             gen_loss = generator_loss(fake_output)
             disc_loss = ragan_ls_loss(real_output, fake_output)
 
-            # Scale losses if mixed presicion enabled, avoid float16 underflow
-            if (self.enable_mixed_presicion):
-                gen_loss = self.gen_optimizer.get_scaled_loss(loss=gen_loss)
-                disc_loss = self.disc_optimizer.get_scaled_loss(loss=disc_loss)
-
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)
 
@@ -155,6 +150,11 @@ class Trainer(Tester):
             gen_tape (tf.GradientTape): tf computations data for gen
             disc_tape (tf.GradientTape): tf computations data for disc
         """
+        # Scale losses if mixed presicion enabled, avoid float16 underflow
+        if (self.enable_mixed_presicion):
+            gen_loss = self.gen_optimizer.get_scaled_loss(loss=gen_loss)
+            disc_loss = self.disc_optimizer.get_scaled_loss(loss=disc_loss)
+
         # Compute Grads for both models
         gen_grads = gen_tape.gradient(
             gen_loss,
@@ -166,7 +166,7 @@ class Trainer(Tester):
             self.discriminator.trainable_variables,
         )
 
-        # Scale down the gards if mixed presicion is anbled
+        # Scale down the grads if mixed presicion is enabled
         if (self.enable_mixed_presicion):
             gen_grads = self.gen_optimizer.get_unscaled_gradients(gen_grads)
             disc_grads = self.disc_optimizer.get_unscaled_gradients(disc_grads)
