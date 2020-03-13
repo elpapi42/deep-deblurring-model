@@ -11,6 +11,7 @@ from sys import stdout
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
+from tensorflow.keras.mixed_precision.experimental import global_policy
 
 from deblurrer.scripts.training import Tester
 from deblurrer.model.losses import ragan_ls_loss, generator_loss
@@ -25,7 +26,6 @@ class Trainer(Tester):
         discriminator,
         gen_optimizer,
         disc_optimizer,
-        enable_mixed_presicion=False,
     ):
         """
         Init the Trainer required Objects.
@@ -35,18 +35,15 @@ class Trainer(Tester):
             discriminator (tf.keras.Model): DS Discriminator
             gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
             disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
-            enable_mixed_presicion (bool): Tensorflow mixed presicion w/ fp16
         """
         super().__init__(generator, discriminator)
 
-        self.enable_mixed_presicion = enable_mixed_presicion
+        # Retrieves if current global policy is mixed presicion
+        gp_name = global_policy().name
+        self.mixed_presicion = gp_name in {'mixed_float16', 'mixed_bfloat16'}
 
-        # Enable fp16 mixed presicion
-        if (enable_mixed_presicion):
-            # Setup float16 mixed precision
-            policy = mixed_precision.Policy('mixed_float16')
-            mixed_precision.set_policy(policy)
-
+        # Enable fp16 mixed safe underflow mechanics
+        if (self.mixed_presicion):
             # Wrap optimizers with loss scaling optimizer
             self.gen_optimizer = mixed_precision.LossScaleOptimizer(
                 gen_optimizer,
@@ -151,7 +148,7 @@ class Trainer(Tester):
             disc_tape (tf.GradientTape): tf computations data for disc
         """
         # Scale losses if mixed presicion enabled, avoid float16 underflow
-        if (self.enable_mixed_presicion):
+        if (self.mixed_presicion):
             gen_loss = self.gen_optimizer.get_scaled_loss(loss=gen_loss)
             disc_loss = self.disc_optimizer.get_scaled_loss(loss=disc_loss)
 
@@ -167,7 +164,7 @@ class Trainer(Tester):
         )
 
         # Scale down the grads if mixed presicion is enabled
-        if (self.enable_mixed_presicion):
+        if (self.mixed_presicion):
             gen_grads = self.gen_optimizer.get_unscaled_gradients(gen_grads)
             disc_grads = self.disc_optimizer.get_unscaled_gradients(disc_grads)
 

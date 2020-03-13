@@ -53,13 +53,18 @@ def run(path):
 
     #with strategy.scope():
 
+    # Setup float16 mixed precision
+    if (int(os.environ.get('USE_MIXED_PRECISION'))):
+        policy = mixed_precision.Policy('mixed_float16')
+        mixed_precision.set_policy(policy)
+
     trainer = Trainer(
         FPNGenerator(int(os.environ.get('FPN_CHANNELS'))),
         DoubleScaleDiscriminator(),
         tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR'))),
         tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR'))),
-        enable_mixed_presicion=True,
     )
+
     trainer.train(valid_dataset, 2, valid_dataset=valid_dataset, verbose=True)
 
 
