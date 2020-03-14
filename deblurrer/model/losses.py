@@ -20,7 +20,7 @@ def ragan_ls_loss(pred, real_preds):
     Returns:
         Loss of predictions compared to expectation
     """
-    real_preds = tf.constant(real_preds, dtype=tf.float32)
+    real_preds = tf.constant(real_preds, dtype=pred.dtype)
 
     first_side = tf.multiply(real_preds, tf.square(pred - 1))
     second_side = tf.multiply(1 - real_preds, tf.square(pred + 1))

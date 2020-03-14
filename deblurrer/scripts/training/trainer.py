@@ -14,7 +14,7 @@ from tensorflow.keras.mixed_precision import experimental as mixed_precision
 from tensorflow.keras.mixed_precision.experimental import global_policy
 
 from deblurrer.scripts.training import Tester
-from deblurrer.model.losses import ragan_ls_loss, generator_loss
+from deblurrer.model.losses import discriminator_loss, generator_loss
 
 
 class Trainer(Tester):
@@ -130,7 +130,7 @@ class Trainer(Tester):
 
             # Calc losses
             gen_loss = generator_loss(fake_output)
-            disc_loss = ragan_ls_loss(real_output, fake_output)
+            disc_loss = discriminator_loss(real_output, fake_output)
 
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)

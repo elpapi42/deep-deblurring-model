@@ -11,7 +11,7 @@ from sys import stdout
 
 import tensorflow as tf
 
-from deblurrer.model.losses import ragan_ls_loss, generator_loss
+from deblurrer.model.losses import discriminator_loss, generator_loss
 
 
 class Tester(object):
@@ -82,7 +82,7 @@ class Tester(object):
         # Calculate and return losses
         return (
             generator_loss(fake_output),
-            ragan_ls_loss(real_output, fake_output),
+            discriminator_loss(real_output, fake_output),
         )
 
     def print_metrics(self, metrics, preffix=''):
