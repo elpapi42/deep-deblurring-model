@@ -22,7 +22,7 @@ def test_local_discriminator():
     outputs = discrim(
         {
             'sharp': inputs,
-            'blur': inputs,
+            'generated': inputs,
         }
     )
 
@@ -61,7 +61,7 @@ def test_global_discriminator():
     outputs = discrim(
         {
             'sharp': inputs,
-            'blur': inputs,
+            'generated': inputs,
         }
     )
 
@@ -83,9 +83,9 @@ def test_double_scale_discriminator():
     outputs = discrim(
         {
             'sharp': inputs,
-            'blur': inputs,
+            'generated': inputs,
         }
     )
 
     # Check shape
-    assert outputs.shape == (2, 2)
+    assert outputs.shape == (2, 1)
