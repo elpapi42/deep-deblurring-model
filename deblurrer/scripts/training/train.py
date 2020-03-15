@@ -10,11 +10,12 @@ This module will eclusively contains training logic.
 import os
 
 import tensorflow as tf
-import numpy as np
+from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
+from deblurrer.scripts.training import Tester, Trainer
 from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import LocalDiscriminator, GlobalDiscriminator, DoubleScaleDiscriminator
+from deblurrer.model.discriminator import DoubleScaleDiscriminator
 
 
 def run(path):
@@ -50,18 +51,22 @@ def run(path):
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
-    # Instantiates the model for training
-    with strategy.scope():
-        model = FPNGenerator()#DoubleScaleDiscriminator()
+    #with strategy.scope():
 
-    #print(model.fpn.backbone.backbone.summary())
-    # Instantiate model and run training
-    # Mock training
-    for example in train_dataset.take(1):
-        print(np.shape(example['blur']))
-        print(model(example['blur']))
+    # Setup float16 mixed precision
+    if (int(os.environ.get('USE_MIXED_PRECISION'))):
+        policy = mixed_precision.Policy('mixed_float16')
+        mixed_precision.set_policy(policy)
 
-    
+    trainer = Trainer(
+        FPNGenerator(int(os.environ.get('FPN_CHANNELS'))),
+        DoubleScaleDiscriminator(),
+        tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR'))),
+        tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR'))),
+    )
+
+    trainer.train(valid_dataset, 2, valid_dataset=valid_dataset, verbose=True)
+
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder
@@ -69,7 +74,9 @@ if (__name__ == '__main__'):
         os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
-                    os.path.abspath(__file__),
+                    os.path.dirname(
+                        os.path.abspath(__file__),
+                    ),
                 ),
             ),
         ),
