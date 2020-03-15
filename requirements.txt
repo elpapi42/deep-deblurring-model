@@ -1,3 +1,4 @@
+tensorflow==2.2.0rc0
 kaggle
 pandas
 numpy
