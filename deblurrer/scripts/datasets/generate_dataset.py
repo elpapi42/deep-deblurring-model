@@ -71,8 +71,8 @@ def transform(example):
 
     # Generates a random resolution multiplier of 256
     rnd_size = tf.multiply(
-        tf.random.uniform([], 1, 7, dtype=tf.int32),
-        256,
+        tf.random.uniform([], 1, 2, dtype=tf.int32),
+        512,
     )
 
     # Resize images to a random res between 256 and 1440
@@ -127,7 +127,7 @@ def get_dataset(path, name, batch_size=8, use_cache=False):
         lambda tfrec: tf.data.TFRecordDataset(tfrec),
         cycle_length=len(tfrecs),
         block_length=batch_size,
-        num_parallel_calls=AUTOTUNE,
+        num_parallel_calls=len(tfrecs),
     )
 
     # Parse, batch and transform

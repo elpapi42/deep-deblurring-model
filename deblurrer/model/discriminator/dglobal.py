@@ -34,9 +34,9 @@ class GlobalDiscriminator(Model):
         self.conv_c = LeakyConvBlock(128, 3, 2, alpha)
         self.conv_d = LeakyConvBlock(256, 3, 2, alpha)
         self.conv_e = LeakyConvBlock(512, 2, 2, alpha)
-        self.conv_f = layers.Conv2D(1, 2, 2, padding='same')
+        self.conv_f = layers.Conv2D(64, 2, 2, padding='same')
 
-        self.flat = layers.Flatten()
+        self.global_pool = layers.GlobalMaxPool2D()
         self.dense = layers.Dense(1, activation='sigmoid')
 
     def call(self, inputs):
@@ -44,13 +44,13 @@ class GlobalDiscriminator(Model):
         Forward call of the Model.
 
         Args:
-            inputs (tf.Tensor): Dict of sharp/blur img w Shape [btch, h, w, ch]
+            inputs (tf.Tensor): Dict of sharp/generated img w Shape [btch, h, w, ch]
 
         Returns:
             Probabilities Tensor of shape [batch, 1]
         """
         # Concat inputs in channels-wise
-        outputs = tf.concat([inputs['sharp'], inputs['blur']], axis=-1)
+        outputs = tf.concat([inputs['sharp'], inputs['generated']], axis=-1)
 
         # Conv feedforward
         outputs = self.conv_a(outputs)
@@ -61,7 +61,7 @@ class GlobalDiscriminator(Model):
         outputs = self.conv_f(outputs)
 
         # Sigmoid activation function
-        outputs = self.flat(outputs)
+        outputs = self.global_pool(outputs)
         outputs = self.dense(outputs)
 
         return outputs
