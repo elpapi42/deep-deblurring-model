@@ -16,7 +16,7 @@ def test_ragan_ls_loss():
 
     loss = ragan_ls_loss(pred, real_preds=True)
 
-    assert loss == tf.constant(0.22625)
+    assert loss == 0.22625
     assert loss.shape == []
 
 
@@ -27,7 +27,7 @@ def test_discriminator_loss():
     loss = discriminator_loss(real_pred, fake_pred)
 
     assert loss.shape == []
-    assert loss.numpy() == tf.constant(1.7675)
+    assert loss == 1.7675
 
 
 def test_generator_loss():
@@ -36,4 +36,4 @@ def test_generator_loss():
     loss = generator_loss(fake_pred)
 
     assert loss.shape == []
-    assert loss.numpy() == tf.constant(0.2832668)
+    assert loss == 0.2832668
