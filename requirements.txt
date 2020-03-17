@@ -1,3 +1,4 @@
+grpcio==1.27.2
 kaggle
 numpy
 tensorflow
