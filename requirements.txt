@@ -1,4 +1,4 @@
-kaggle==1.5.6
-numpy==1.18.1
-tensorflow==2.2.0rc0
+kaggle
+numpy
+tensorflow
 pandas
