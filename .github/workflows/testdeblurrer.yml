@@ -30,6 +30,8 @@ jobs:
       run: |
         sudo apt-get install libpq-dev python-dev
         python -m pip install --upgrade pip
+        python3 -c "import setuptools; print(setuptools.__version__)"
+        python3 -c "from setuptools import pep425tags; print(pep425tags.get_supported()[0])"
         python setup.py install
         pip install pytest
     
