@@ -4,7 +4,6 @@
 """Test suit for custom losses module."""
 
 import tensorflow as tf
-import numpy as np
 
 from deblurrer.model.losses import ragan_ls_loss
 from deblurrer.model.losses import discriminator_loss
