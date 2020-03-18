@@ -20,13 +20,19 @@ def test_ragan_ls_loss():
 
 
 def test_discriminator_loss():
-    real_pred = tf.constant([[0.75, 0.5, 0.95]])
-    fake_pred = tf.constant([[0.15, 0.45, 0.25]])
+    real_pred = {
+        'local': tf.constant([[0.75, 0.5, 0.95]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
+    fake_pred = {
+        'local': tf.constant([[0.15, 0.45, 0.25]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
 
     loss = discriminator_loss(real_pred, fake_pred)
 
     assert loss.shape == []
-    assert loss == 1.7675
+    assert loss == 4.9108334
 
 
 def test_generator_loss():

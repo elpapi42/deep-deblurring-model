@@ -33,16 +33,19 @@ def discriminator_loss(real_pred, fake_pred):
     Compute the **TOTAL** RaGAN-LS loss of DScaleDiscrim.
 
     Args:
-        real_pred (tf.Tensor): discriminator over real images
-        fake_pred (tf.Tensor): discrim over generated images
+        real_pred (dict): discriminator output over real images
+        fake_pred (dict): discrim output over generated images
 
     Returns:
         Total loss over real and fake images
     """
-    real_loss = ragan_ls_loss(real_pred, real_preds=True)
-    fake_loss = ragan_ls_loss(fake_pred, real_preds=False)
+    real_loss_l = ragan_ls_loss(real_pred['local'], real_preds=True)
+    real_loss_g = ragan_ls_loss(real_pred['global'], real_preds=True)
 
-    return real_loss + fake_loss
+    fake_loss_l = ragan_ls_loss(fake_pred['local'], real_preds=False)
+    fake_loss_g = ragan_ls_loss(fake_pred['global'], real_preds=False)
+
+    return real_loss_l + real_loss_g + fake_loss_l + fake_loss_g
 
 
 def generator_loss(fake_pred):

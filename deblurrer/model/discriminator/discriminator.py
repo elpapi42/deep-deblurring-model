@@ -41,13 +41,12 @@ class DoubleScaleDiscriminator(Model):
             inputs (tf.Tensor): Dict of sharp/generated img w Shape [btch, h, w, ch]
 
         Returns:
-            Probabilities Tensor of shape [batch, 1]
+            Dict with local/global keys w/ tensors shape [batch, 1]
         """
         local = self.local(inputs)
         dglobal = self.dglobal(inputs)
 
-        # Returns mean of the losses between both networks
-        outputs = tf.stack([local, dglobal], axis=2)
-        outputs = tf.reduce_mean(outputs, [2])
-
-        return outputs
+        return {
+            'local': local,
+            'global': dglobal,
+        }
