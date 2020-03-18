@@ -36,9 +36,12 @@ def test_discriminator_loss():
 
 
 def test_generator_loss():
-    fake_pred = [[0.95, 0.6, 0.75]]
+    fake_pred = {
+        'local': tf.constant([[0.15, 0.45, 0.25]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
 
     loss = generator_loss(fake_pred)
 
     assert loss.shape == []
-    assert loss == 0.2832668
+    assert loss == 0.3640917

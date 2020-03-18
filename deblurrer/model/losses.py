@@ -90,4 +90,4 @@ def generator_mse(fake_pred):
     local_loss = tf.keras.losses.mean_squared_error(fake_pred['local'], ones)
     global_loss = tf.keras.losses.mean_squared_error(fake_pred['global'], ones)
 
-    return local_loss + global_loss
+    return tf.reduce_mean(local_loss + global_loss)
