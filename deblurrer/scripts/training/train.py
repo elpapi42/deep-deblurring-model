@@ -65,7 +65,7 @@ def run(path):
         tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR'))),
     )
 
-    trainer.train(valid_dataset, 2, valid_dataset=valid_dataset, verbose=True)
+    trainer.train(valid_dataset, 4, valid_dataset=valid_dataset, verbose=True)
 
 
 if (__name__ == '__main__'):

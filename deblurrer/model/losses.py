@@ -66,6 +66,28 @@ def generator_loss(fake_pred):
     Returns:
         Generator three-term loss function output
     """
-    bin_cross = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+    ladv_local = ragan_ls_loss(fake_pred['local'], real_preds=False)
+    ladv_global = ragan_ls_loss(fake_pred['global'], real_preds=False)
+    ladv = ladv_local + ladv_global
 
-    return bin_cross(tf.ones_like(fake_pred), fake_pred)
+    lp = generator_mse(fake_pred)
+
+    return 0.5 * lp + 0.01 * ladv
+
+
+def generator_mse(fake_pred):
+    """
+    Compute MSE between discrim output and ones.
+
+    Args:
+        fake_pred (tf.Tensor): output of discriminator
+
+    Returns:
+        MSE between fake_pred and one-like tensor
+    """
+    ones = tf.ones(fake_pred['local'].shape, dtype=fake_pred['local'].dtype)
+
+    local_loss = tf.keras.losses.mean_squared_error(fake_pred['local'], ones)
+    global_loss = tf.keras.losses.mean_squared_error(fake_pred['global'], ones)
+
+    return local_loss + global_loss
