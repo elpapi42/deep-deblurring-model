@@ -66,7 +66,7 @@ def test_generator_loss(loss_network):
     loss = generator_loss(gen_input, sharp_input, fake_pred, loss_network)
 
     assert loss.shape == []
-    assert loss == 0.08987017
+    assert tf.cast(loss, dtype=tf.float16) == 0.08987017
 
 
 def test_feature_reconstruction_loss(loss_network):
@@ -77,4 +77,4 @@ def test_feature_reconstruction_loss(loss_network):
     loss = feature_reconstruction_loss(gen_input, sharp_input, loss_network)
 
     assert loss.shape == []
-    assert loss == 0.0011661573
+    assert tf.cast(loss, dtype=tf.float16) == 0.0011661573
