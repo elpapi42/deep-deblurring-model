@@ -30,6 +30,8 @@ class Tester(object):
         self.generator = generator
         self.discriminator = discriminator
 
+        self.loss_network = self.get_loss_network()
+
     def test(self, dataset, verbose=False):
         """
         Test the geneator and discriminator against the supplied dataset.
@@ -77,11 +79,16 @@ class Tester(object):
         Returns:
             Loss and metrics for this step
         """
-        real_output, fake_output = self.gan_forward_pass(images)
+        real_output, fake_output, gen_images = self.gan_forward_pass(images)
 
         # Calculate and return losses
         return (
-            generator_loss(fake_output),
+            generator_loss(
+                gen_images,
+                images['sharp'],
+                fake_output,
+                self.loss_network,
+            ),
             discriminator_loss(real_output, fake_output),
         )
 
@@ -122,7 +129,7 @@ class Tester(object):
             training (bool): If th forward pass is part of a training step
 
         Returns:
-            Output of the GAN
+            Output of the GAN, including generated images
         """
         # Forward pass generator with blurred images
         generated_images = self.generator(images['blur'], training=False)
@@ -143,4 +150,22 @@ class Tester(object):
         return (
             self.discriminator(sharp_images, training=False),
             self.discriminator(generated_images, training=False),
+            generated_images['generated'],
+        )
+
+    def get_loss_network(self):
+        """
+        Build model based on VGG19.
+
+        The model will output conv3_3 layer output
+        the remaining architecture will be discarded
+
+        Returns:
+            Loss network based on VGG19
+        """
+        vgg19 = tf.keras.applications.VGG19(include_top=False)
+
+        return tf.keras.Model(
+            inputs=vgg19.inputs,
+            outputs=vgg19.get_layer(name='block3_conv3').output,
         )
