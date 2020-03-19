@@ -48,3 +48,7 @@ def test_generator_loss():
 
     assert loss.shape == []
     assert loss == 0.006341667
+
+
+def test_feature_reconstruction_loss():
+    assert False

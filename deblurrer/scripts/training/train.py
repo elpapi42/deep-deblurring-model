@@ -67,6 +67,8 @@ def run(path):
 
     trainer.train(valid_dataset, 4, valid_dataset=valid_dataset, verbose=True)
 
+    print(trainer.loss_network.summary())
+
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder

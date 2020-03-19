@@ -129,7 +129,12 @@ class Trainer(Tester):
             )
 
             # Calc losses
-            gen_loss = generator_loss(gen_images, images['sharp'], fake_output)
+            gen_loss = generator_loss(
+                gen_images,
+                images['sharp'],
+                fake_output,
+                self.loss_network,
+            )
             disc_loss = discriminator_loss(real_output, fake_output)
 
             # Calculate gradients and downscale them
