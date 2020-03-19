@@ -77,11 +77,11 @@ class Tester(object):
         Returns:
             Loss and metrics for this step
         """
-        real_output, fake_output = self.gan_forward_pass(images)
+        real_output, fake_output, gen_images = self.gan_forward_pass(images)
 
         # Calculate and return losses
         return (
-            generator_loss(fake_output),
+            generator_loss(gen_images, images['sharp'], fake_output),
             discriminator_loss(real_output, fake_output),
         )
 
@@ -122,7 +122,7 @@ class Tester(object):
             training (bool): If th forward pass is part of a training step
 
         Returns:
-            Output of the GAN
+            Output of the GAN, including generated images
         """
         # Forward pass generator with blurred images
         generated_images = self.generator(images['blur'], training=False)
@@ -143,4 +143,5 @@ class Tester(object):
         return (
             self.discriminator(sharp_images, training=False),
             self.discriminator(generated_images, training=False),
+            generated_images['generated'],
         )

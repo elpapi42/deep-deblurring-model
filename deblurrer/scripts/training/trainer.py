@@ -123,13 +123,13 @@ class Trainer(Tester):
         """
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
             # Forward pass
-            real_output, fake_output = self.gan_forward_pass(
+            real_output, fake_output, gen_images = self.gan_forward_pass(
                 images,
                 training=True,
             )
 
             # Calc losses
-            gen_loss = generator_loss(fake_output)
+            gen_loss = generator_loss(gen_images, images['sharp'], fake_output)
             disc_loss = discriminator_loss(real_output, fake_output)
 
             # Calculate gradients and downscale them
