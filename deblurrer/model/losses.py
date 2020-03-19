@@ -73,6 +73,7 @@ def generator_loss(gen_images, sharp_images, fake_pred):
     ladv = ladv_local + ladv_global
 
     lp = tf.keras.losses.mean_squared_error(sharp_images, gen_images)
+    lp = tf.reduce_mean(lp)
 
     return 0.5 * lp + 0.01 * ladv
 

@@ -41,7 +41,10 @@ def test_generator_loss():
         'global': tf.constant([[0.75, 0.5, 0.95]]),
     }
 
-    loss = generator_loss(fake_pred)
+    # Fake image, will be generated and sharp image
+    inputs = tf.random.uniform([4, 32, 32, 3], seed=1)
+
+    loss = generator_loss(inputs, inputs, fake_pred)
 
     assert loss.shape == []
-    assert loss == 0.3640917
+    assert loss == 0.006341667
