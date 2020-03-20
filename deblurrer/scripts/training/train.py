@@ -66,7 +66,7 @@ def run(
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
-    with strategy if colab_tpu else contextlib.suppress():
+    with strategy.scope() if colab_tpu else contextlib.suppress():
         # Instantiate models and optimizers
         if (generator is None):
             generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
