@@ -18,12 +18,22 @@ from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 
 
-def run(path):
+def run(
+    path,
+    generator=None,
+    discriminator=None,
+    gen_optimizer=None,
+    disc_optimizer=None,
+):
     """
     Run the training script.
 
     Args:
         path (str): path from where to load tfrecords
+        generator (tf.keras.Model): FPN Generator
+        discriminator (tf.keras.Model): DS Discriminator
+        gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
+        disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
     """
     # Create train dataset
     train_dataset = get_dataset(
@@ -58,16 +68,30 @@ def run(path):
         policy = mixed_precision.Policy('mixed_float16')
         mixed_precision.set_policy(policy)
 
+    if (generator is None):
+        generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
+    if (discriminator is None):
+        discriminator = DoubleScaleDiscriminator()
+    if (gen_optimizer is None):
+        gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
+    if (disc_optimizer is None):
+        disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
+
     trainer = Trainer(
-        FPNGenerator(int(os.environ.get('FPN_CHANNELS'))),
-        DoubleScaleDiscriminator(),
-        tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR'))),
-        tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR'))),
+        generator,
+        discriminator,
+        gen_optimizer,
+        disc_optimizer,
     )
 
-    trainer.train(valid_dataset, 4, valid_dataset=valid_dataset, verbose=True)
+    trainer.train(
+        valid_dataset,
+        int(os.environ.get('EPOCHS')),
+        valid_dataset=valid_dataset,
+        verbose=True,
+    )
 
-    print(trainer.loss_network.summary())
+    return generator, discriminator, gen_optimizer, disc_optimizer
 
 
 if (__name__ == '__main__'):
