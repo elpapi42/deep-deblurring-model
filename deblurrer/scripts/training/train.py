@@ -55,9 +55,8 @@ def run(
         policy = mixed_precision.Policy('mixed_float16')
         mixed_precision.set_policy(policy)
 
-    # If the machine executing the code has TPUs, use them
+    # If in colba tpu instance, use tpus, gpus otherwise
     colab_tpu = os.environ.get('COLAB_TPU_ADDR') is not None
-    strategy = tf.distribute.MirroredStrategy()
     if (colab_tpu):
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
             tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
@@ -70,6 +69,8 @@ def run(
         # Convert dataset to distribute datasets
         train_dataset = strategy.experimental_distribute_dataset(train_dataset)
         valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
+    else:
+        strategy = tf.distribute.MirroredStrategy()
 
     with strategy.scope():
         # Instantiate models and optimizers
