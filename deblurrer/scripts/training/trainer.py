@@ -8,6 +8,7 @@ This module will eclusively contain training logic.
 """
 
 from sys import stdout
+import os
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -26,6 +27,7 @@ class Trainer(Tester):
         discriminator,
         gen_optimizer,
         disc_optimizer,
+        strategy,
     ):
         """
         Init the Trainer required Objects.
@@ -35,8 +37,11 @@ class Trainer(Tester):
             discriminator (tf.keras.Model): DS Discriminator
             gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
             disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+            strategy (tf.distribute.Strategy): Distribution strategy
         """
         super().__init__(generator, discriminator)
+
+        self.strategy = strategy
 
         # Retrieves if current global policy is mixed presicion
         gp_name = global_policy().name
@@ -112,6 +117,19 @@ class Trainer(Tester):
 
     @tf.function
     def train_step(self, images):
+        # Execute a train step on each replica
+        per_replica_losses = self.strategy.experimental_run_v2(self.train_fn, args=(images,))
+
+        # Agregates all the replicas results
+        gen_loss, disc_loss = self.strategy.reduce(
+            tf.distribute.ReduceOp.MEAN,
+            per_replica_losses,
+            axis=None,
+        )
+
+        return gen_loss, disc_loss
+
+    def train_fn(self, images):
         """
         Run a single trining step that update params for both models.
 
@@ -135,7 +153,10 @@ class Trainer(Tester):
                 fake_output,
                 self.loss_network,
             )
+            gen_loss = gen_loss / float(os.environ.get('BATCH_SIZE'))
+
             disc_loss = discriminator_loss(real_output, fake_output)
+            disc_loss = disc_loss / float(os.environ.get('BATCH_SIZE'))
 
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)

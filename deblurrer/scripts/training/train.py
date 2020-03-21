@@ -57,6 +57,7 @@ def run(
 
     # If the machine executing the code has TPUs, use them
     colab_tpu = os.environ.get('COLAB_TPU_ADDR') is not None
+    strategy = tf.distribute.MirroredStrategy()
     if (colab_tpu):
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
             tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
@@ -70,7 +71,7 @@ def run(
         train_dataset = strategy.experimental_distribute_dataset(train_dataset)
         valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
 
-    with strategy.scope() if colab_tpu else contextlib.suppress():
+    with strategy.scope():
         # Instantiate models and optimizers
         if (generator is None):
             generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
@@ -86,6 +87,7 @@ def run(
             discriminator,
             gen_optimizer,
             disc_optimizer,
+            strategy,
         )
 
         trainer.train(
@@ -94,6 +96,9 @@ def run(
             valid_dataset=valid_dataset,
             verbose=True,
         )
+
+        for batch in train_dataset.take(1):
+            trainer.train_step(batch)
 
     return generator, discriminator, gen_optimizer, disc_optimizer
 
