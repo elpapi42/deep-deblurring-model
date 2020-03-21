@@ -66,6 +66,10 @@ def run(
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
+        # Convert dataset to distribute datasets
+        train_dataset = strategy.experimental_distribute_dataset(train_dataset)
+        valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
+
     with strategy.scope() if colab_tpu else contextlib.suppress():
         # Instantiate models and optimizers
         if (generator is None):
