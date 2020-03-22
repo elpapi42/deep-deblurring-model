@@ -129,6 +129,7 @@ class Trainer(Tester):
 
         return gen_loss, disc_loss
 
+    @tf.function
     def train_fn(self, images):
         """
         Run a single trining step that update params for both models.
@@ -153,10 +154,7 @@ class Trainer(Tester):
                 fake_output,
                 self.loss_network,
             )
-            gen_loss = gen_loss / float(os.environ.get('BATCH_SIZE'))
-
             disc_loss = discriminator_loss(real_output, fake_output)
-            disc_loss = disc_loss / float(os.environ.get('BATCH_SIZE'))
 
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)

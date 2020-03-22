@@ -70,7 +70,7 @@ def run(
         train_dataset = strategy.experimental_distribute_dataset(train_dataset)
         valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
     else:
-        strategy = tf.distribute.MirroredStrategy()
+        strategy = tf.distribute.OneDeviceStrategy(device='/gpu:0')
 
     with strategy.scope():
         # Instantiate models and optimizers
