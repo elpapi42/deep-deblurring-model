@@ -8,6 +8,7 @@ This module will eclusively contains training logic.
 """
 
 import os
+import contextlib
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -49,10 +50,14 @@ def run(
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
-    # If the machine executing the code has TPUs, use them
-    if (True):
-        strategy = tf.distribute.MirroredStrategy()
-    else:
+    # Setup float16 mixed precision
+    if (int(os.environ.get('USE_MIXED_PRECISION'))):
+        policy = mixed_precision.Policy('mixed_float16')
+        mixed_precision.set_policy(policy)
+
+    # If in colba tpu instance, use tpus, gpus otherwise
+    colab_tpu = os.environ.get('COLAB_TPU_ADDR') is not None
+    if (colab_tpu):
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
             tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
         )
@@ -61,35 +66,40 @@ def run(
 
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
-    #with strategy.scope():
+        # Convert dataset to distribute datasets
+        train_dataset = strategy.experimental_distribute_dataset(train_dataset)
+        valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
+    else:
+        strategy = tf.distribute.OneDeviceStrategy(device='/gpu:0')
 
-    # Setup float16 mixed precision
-    if (int(os.environ.get('USE_MIXED_PRECISION'))):
-        policy = mixed_precision.Policy('mixed_float16')
-        mixed_precision.set_policy(policy)
+    with strategy.scope():
+        # Instantiate models and optimizers
+        if (generator is None):
+            generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
+        if (discriminator is None):
+            discriminator = DoubleScaleDiscriminator()
+        if (gen_optimizer is None):
+            gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
+        if (disc_optimizer is None):
+            disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
 
-    if (generator is None):
-        generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
-    if (discriminator is None):
-        discriminator = DoubleScaleDiscriminator()
-    if (gen_optimizer is None):
-        gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
-    if (disc_optimizer is None):
-        disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
+        trainer = Trainer(
+            generator,
+            discriminator,
+            gen_optimizer,
+            disc_optimizer,
+            strategy,
+        )
 
-    trainer = Trainer(
-        generator,
-        discriminator,
-        gen_optimizer,
-        disc_optimizer,
-    )
+        trainer.train(
+            train_dataset,
+            int(os.environ.get('EPOCHS')),
+            valid_dataset=valid_dataset,
+            verbose=True,
+        )
 
-    trainer.train(
-        valid_dataset,
-        int(os.environ.get('EPOCHS')),
-        valid_dataset=valid_dataset,
-        verbose=True,
-    )
+        for batch in train_dataset.take(1):
+            trainer.train_step(batch)
 
     return generator, discriminator, gen_optimizer, disc_optimizer
 
