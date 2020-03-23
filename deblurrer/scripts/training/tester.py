@@ -17,15 +17,18 @@ from deblurrer.model.losses import discriminator_loss, generator_loss
 class Tester(object):
     """Define testing and evaluation of the GAN."""
 
-    def __init__(self, generator, discriminator):
+    def __init__(self, generator, discriminator, strategy):
         """
         Init the models required.
 
         Args:
             generator (tf.keras.Model): FPN Generator
             discriminator (tf.keras.Model): DS Discriminator
+            strategy (tf.distribute.Strategy): Distribution strategy
         """
         super().__init__()
+
+        self.strategy = strategy
 
         self.generator = generator
         self.discriminator = discriminator
@@ -73,13 +76,40 @@ class Tester(object):
         """
         Forward pass images trought model and calculate loss and metrics.
 
+        This is done in a distributed way
+        using the supplied distribute strategy
+
         Args:
             images (dict): Of Tensors with shape [batch, height, width, chnls]
 
         Returns:
             Loss and metrics for this step
         """
-        return self.get_loss_over_batch(images, training=False)
+        # Execute a train step on each replica
+        per_replica_losses = self.strategy.experimental_run_v2(
+            self.step_fn,
+            args=(images, False),
+        )
+
+        # Agregates all the replicas results
+        return self.strategy.reduce(
+            tf.distribute.ReduceOp.MEAN,
+            per_replica_losses,
+            axis=None,
+        )
+
+    def step_fn(self, images, training=False):
+        """
+        Run a single step that calculates and return metrics.
+
+        Args:
+            images (dict): Batch of sharp/blur image pairs
+            training (bool): If th forward pass is part of a training step
+
+        Returns:
+            Loss and metrics for this step
+        """
+        return self.get_loss_over_batch(images, training)
 
     def print_metrics(self, metrics, preffix=''):
         """
