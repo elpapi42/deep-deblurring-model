@@ -17,18 +17,23 @@ from deblurrer.model.losses import discriminator_loss, generator_loss
 class Tester(object):
     """Define testing and evaluation of the GAN."""
 
-    def __init__(self, generator, discriminator):
+    def __init__(self, generator, discriminator, strategy):
         """
         Init the models required.
 
         Args:
             generator (tf.keras.Model): FPN Generator
             discriminator (tf.keras.Model): DS Discriminator
+            strategy (tf.distribute.Strategy): Distribution strategy
         """
         super().__init__()
 
+        self.strategy = strategy
+
         self.generator = generator
         self.discriminator = discriminator
+
+        self.loss_network = self.get_loss_network()
 
     def test(self, dataset, verbose=False):
         """
@@ -52,7 +57,7 @@ class Tester(object):
         # Loop over full dataset batches
         for image_batch in dataset:
             # Exec test step
-            gen_loss, disc_loss = self.test_step(image_batch)
+            gen_loss, disc_loss = self.distributed_step(image_batch)
 
             gen_loss_metric(gen_loss)
             disc_loss_metric(disc_loss)
@@ -67,23 +72,46 @@ class Tester(object):
         return gen_loss_metric, disc_loss_metric
 
     @tf.function
-    def test_step(self, images):
+    def distributed_step(self, images, training=False):
         """
         Forward pass images trought model and calculate loss and metrics.
 
+        This is done in a distributed way
+        using the supplied distribute strategy
+
         Args:
             images (dict): Of Tensors with shape [batch, height, width, chnls]
+            training (bool): If th forward pass is part of a training step
 
         Returns:
             Loss and metrics for this step
         """
-        real_output, fake_output = self.gan_forward_pass(images)
-
-        # Calculate and return losses
-        return (
-            generator_loss(fake_output),
-            discriminator_loss(real_output, fake_output),
+        # Execute a distributed step on each replica
+        per_replica_losses = self.strategy.experimental_run_v2(
+            self.step_fn,
+            args=(images, training),
         )
+
+        # Agregates all the replicas results
+        return self.strategy.reduce(
+            tf.distribute.ReduceOp.MEAN,
+            per_replica_losses,
+            axis=None,
+        )
+
+    @tf.function
+    def step_fn(self, images, training=False):
+        """
+        Run a single step that calculates and return metrics.
+
+        Args:
+            images (dict): Batch of sharp/blur image pairs
+            training (bool): If th forward pass is part of a training step
+
+        Returns:
+            Loss and metrics for this step
+        """
+        return self.get_loss_over_batch(images, training)
 
     def print_metrics(self, metrics, preffix=''):
         """
@@ -122,7 +150,7 @@ class Tester(object):
             training (bool): If th forward pass is part of a training step
 
         Returns:
-            Output of the GAN
+            Output of the GAN, including generated images
         """
         # Forward pass generator with blurred images
         generated_images = self.generator(images['blur'], training=False)
@@ -143,4 +171,50 @@ class Tester(object):
         return (
             self.discriminator(sharp_images, training=False),
             self.discriminator(generated_images, training=False),
+            generated_images['generated'],
+        )
+
+    def get_loss_over_batch(self, images, training=False):
+        """
+        Compute losses of the GAN over a batch of images.
+
+        Args:
+            images (dict): Sharp/Blur image batches of 4d tensors
+            training (bool): If the forward pass is part of a training step
+        
+        Returns:
+            Losses of the generator and discriminator networks
+        """
+        # Forward propagates the supplied batch of images.
+        real_output, fake_output, gen_images = self.gan_forward_pass(
+            images,
+            training=training,
+        )
+
+        # Calculate and return losses
+        return (
+            generator_loss(
+                gen_images,
+                images['sharp'],
+                fake_output,
+                self.loss_network,
+            ),
+            discriminator_loss(real_output, fake_output),
+        )
+
+    def get_loss_network(self):
+        """
+        Build model based on VGG19.
+
+        The model will output conv3_3 layer output
+        the remaining architecture will be discarded
+
+        Returns:
+            Loss network based on VGG19
+        """
+        vgg19 = tf.keras.applications.VGG19(include_top=False)
+
+        return tf.keras.Model(
+            inputs=vgg19.inputs,
+            outputs=vgg19.get_layer(name='block3_conv3').output,
         )

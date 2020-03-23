@@ -77,7 +77,7 @@ def test_double_scale_discriminator():
     discrim = DoubleScaleDiscriminator()
 
     # Fake random image tensor
-    inputs = tf.random.uniform([2, 256, 256, 3], seed=1)
+    inputs = tf.random.uniform([4, 32, 32, 3], seed=1)
 
     # Feeds faked sharp/blur pair
     outputs = discrim(
@@ -88,4 +88,7 @@ def test_double_scale_discriminator():
     )
 
     # Check shape
-    assert outputs.shape == (2, 1)
+    assert outputs.get('local') is not None
+    assert outputs.get('global') is not None
+    assert outputs.get('local').shape == [4, 1]
+    assert outputs.get('global').shape == [4, 1]

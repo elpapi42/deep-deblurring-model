@@ -4,10 +4,28 @@
 """Test suit for custom losses module."""
 
 import tensorflow as tf
+import pytest
 
 from deblurrer.model.losses import ragan_ls_loss
 from deblurrer.model.losses import discriminator_loss
 from deblurrer.model.losses import generator_loss
+from deblurrer.model.losses import feature_reconstruction_loss
+
+
+@pytest.fixture()
+def loss_network():
+    """
+    Mock loss network.
+
+    Returns:
+        VGG19 based loss network
+    """
+    vgg19 = tf.keras.applications.VGG19(include_top=False)
+
+    return tf.keras.Model(
+        inputs=vgg19.inputs,
+        outputs=vgg19.get_layer(name='block3_conv3').output,
+    )
 
 
 def test_ragan_ls_loss():
@@ -20,19 +38,43 @@ def test_ragan_ls_loss():
 
 
 def test_discriminator_loss():
-    real_pred = tf.constant([[0.75, 0.5, 0.95]])
-    fake_pred = tf.constant([[0.15, 0.45, 0.25]])
+    real_pred = {
+        'local': tf.constant([[0.75, 0.5, 0.95]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
+    fake_pred = {
+        'local': tf.constant([[0.15, 0.45, 0.25]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
 
     loss = discriminator_loss(real_pred, fake_pred)
 
     assert loss.shape == []
-    assert loss == 1.7675
+    assert loss == 4.9108334
 
 
-def test_generator_loss():
-    fake_pred = [[0.95, 0.6, 0.75]]
+def test_generator_loss(loss_network):
+    fake_pred = {
+        'local': tf.constant([[0.15, 0.45, 0.25]]),
+        'global': tf.constant([[0.75, 0.5, 0.95]]),
+    }
 
-    loss = generator_loss(fake_pred)
+    # Fake image, will be generated and sharp image
+    gen_input = tf.random.uniform([4, 32, 32, 3], seed=1)
+    sharp_input = tf.random.uniform([4, 32, 32, 3], seed=2)
+
+    loss = generator_loss(gen_input, sharp_input, fake_pred, loss_network)
 
     assert loss.shape == []
-    assert loss == 0.2832668
+    assert tf.cast(loss, dtype=tf.float16) == 0.08987017
+
+
+def test_feature_reconstruction_loss(loss_network):
+    # Fake image, will be generated and sharp image
+    gen_input = tf.random.uniform([4, 32, 32, 3], seed=1)
+    sharp_input = tf.random.uniform([4, 32, 32, 3], seed=2)
+
+    loss = feature_reconstruction_loss(gen_input, sharp_input, loss_network)
+
+    assert loss.shape == []
+    assert tf.cast(loss, dtype=tf.float16) == 0.0011661573

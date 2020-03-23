@@ -3,21 +3,14 @@
 
 """Setup and install the package and all the dependencies."""
 
-import os
 from setuptools import setup, find_packages
 
-requirements_folder = os.path.join(os.path.dirname(__file__), 'requirements/')
-
 with open('requirements.txt') as pro:
-    INSTALL_REQUIRES = pro.read()
-
-# This will be enable when project reach production and have a testing suit
-#with open(os.path.join(requirements_folder, 'test.txt')) as test:
-#    TEST_REQUIRES = test.read()
+    INSTALL_REQUIRES = pro.read().split('\n')
 
 setup(
-    author='Deep Learning Research Team',
-    #author_email='',
+    author='Whitman Bohorquez, Mo Rebaie',
+    author_email='whitman-2@hotmail.com',
     name='deblurrer',
     license='MIT',
     description='Image Deblurring using Deep Learning Architecture',
@@ -27,9 +20,6 @@ setup(
     include_package_data=True,
     python_requires='>=3.6',
     install_requires=INSTALL_REQUIRES,
-    extras_require={
-        'test': INSTALL_REQUIRES,
-    },
     classifiers=[
         'Development Status :: Alpha',
         'Programming Language :: Python',

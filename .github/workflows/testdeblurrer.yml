@@ -1,0 +1,40 @@
+name: Test Deblurrer
+
+on: 
+  push:
+    branches:
+    - master
+    - development 
+  pull_request:
+    branches:
+    - master
+    - development
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 4
+      matrix:
+        python-version: [3.7]
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+        
+    - name: Install dependencies
+      run: |
+        sudo apt-get install libpq-dev python-dev
+        python -m pip install --upgrade pip
+        python -m pip install --upgrade setuptools
+        python setup.py install
+        pip install pytest
+    
+    - name: Test with pytest
+      run: |
+        PYTHONPATH=${PYTHONPATH}:/home/runner/work/deep-deblurring/deep-deblurring/backend:$(pwd)
+        pytest

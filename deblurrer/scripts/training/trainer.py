@@ -8,6 +8,7 @@ This module will eclusively contain training logic.
 """
 
 from sys import stdout
+import os
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -26,6 +27,7 @@ class Trainer(Tester):
         discriminator,
         gen_optimizer,
         disc_optimizer,
+        strategy,
     ):
         """
         Init the Trainer required Objects.
@@ -35,8 +37,9 @@ class Trainer(Tester):
             discriminator (tf.keras.Model): DS Discriminator
             gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
             disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+            strategy (tf.distribute.Strategy): Distribution strategy
         """
-        super().__init__(generator, discriminator)
+        super().__init__(generator, discriminator, strategy)
 
         # Retrieves if current global policy is mixed presicion
         gp_name = global_policy().name
@@ -82,7 +85,10 @@ class Trainer(Tester):
             # Loop over full dataset batches
             for image_batch in dataset:
                 # Exec train step
-                gen_loss, disc_loss = self.train_step(image_batch)
+                gen_loss, disc_loss = self.distributed_step(
+                    image_batch,
+                    training=True,
+                )
 
                 gen_train_loss(gen_loss)
                 disc_train_loss(disc_loss)
@@ -111,26 +117,23 @@ class Trainer(Tester):
             disc_train_loss.reset_states()
 
     @tf.function
-    def train_step(self, images):
+    def step_fn(self, images, training=False):
         """
-        Run a single trining step that update params for both models.
+        Run a single train step that update params.
+
+        This is an overriding of Tester implementation
+        that updates the weights
 
         Args:
             images (dict): Batch of sharp/blur image pairs
+            training (bool): If th forward pass is part of a training step
 
         Returns:
             Loss and metrics for this step
         """
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            # Forward pass
-            real_output, fake_output = self.gan_forward_pass(
-                images,
-                training=True,
-            )
-
-            # Calc losses
-            gen_loss = generator_loss(fake_output)
-            disc_loss = discriminator_loss(real_output, fake_output)
+            # Forward propagates the supplied batch of images and get losses.
+            gen_loss, disc_loss = super().step_fn(images, training)
 
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)
