@@ -91,12 +91,6 @@ def run(
             strategy,
         )
 
-        tester = Tester(
-            generator,
-            discriminator,
-            strategy,
-        )
-
         trainer.train(
             train_dataset,
             int(os.environ.get('EPOCHS')),
