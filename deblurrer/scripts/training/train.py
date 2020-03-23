@@ -25,6 +25,7 @@ def run(
     discriminator=None,
     gen_optimizer=None,
     disc_optimizer=None,
+    strategy=None,
 ):
     """
     Run the training script.
@@ -35,6 +36,7 @@ def run(
         discriminator (tf.keras.Model): DS Discriminator
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
+        strategy (tf.distributed.Strategy): Distribution strategy
     """
     # Create train dataset
     train_dataset = get_dataset(
@@ -57,7 +59,7 @@ def run(
 
     # If in colba tpu instance, use tpus, gpus otherwise
     colab_tpu = os.environ.get('COLAB_TPU_ADDR') is not None
-    if (colab_tpu):
+    if (colab_tpu and (strategy is None)):
         resolver = tf.distribute.cluster_resolver.TPUClusterResolver(
             tpu='grpc://' + os.environ.get('COLAB_TPU_ADDR'),
         )
@@ -69,7 +71,7 @@ def run(
         # Convert dataset to distribute datasets
         train_dataset = strategy.experimental_distribute_dataset(train_dataset)
         valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
-    else:
+    elif (strategy is None):
         strategy = tf.distribute.OneDeviceStrategy(device='/gpu:0')
 
     with strategy.scope():
@@ -98,7 +100,7 @@ def run(
             verbose=True,
         )
 
-    return generator, discriminator, gen_optimizer, disc_optimizer
+    return generator, discriminator, gen_optimizer, disc_optimizer, strategy
 
 
 if (__name__ == '__main__'):
