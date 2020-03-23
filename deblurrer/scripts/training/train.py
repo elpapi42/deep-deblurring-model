@@ -91,15 +91,18 @@ def run(
             strategy,
         )
 
+        tester = Tester(
+            generator,
+            discriminator,
+            strategy,
+        )
+
         trainer.train(
             train_dataset,
             int(os.environ.get('EPOCHS')),
             valid_dataset=valid_dataset,
             verbose=True,
         )
-
-        for batch in train_dataset.take(1):
-            trainer.train_step(batch)
 
     return generator, discriminator, gen_optimizer, disc_optimizer
 

@@ -57,7 +57,7 @@ class Tester(object):
         # Loop over full dataset batches
         for image_batch in dataset:
             # Exec test step
-            gen_loss, disc_loss = self.test_step(image_batch)
+            gen_loss, disc_loss = self.distributed_step(image_batch)
 
             gen_loss_metric(gen_loss)
             disc_loss_metric(disc_loss)
@@ -72,7 +72,7 @@ class Tester(object):
         return gen_loss_metric, disc_loss_metric
 
     @tf.function
-    def test_step(self, images):
+    def distributed_step(self, images, training=False):
         """
         Forward pass images trought model and calculate loss and metrics.
 
@@ -81,14 +81,15 @@ class Tester(object):
 
         Args:
             images (dict): Of Tensors with shape [batch, height, width, chnls]
+            training (bool): If th forward pass is part of a training step
 
         Returns:
             Loss and metrics for this step
         """
-        # Execute a train step on each replica
+        # Execute a distributed step on each replica
         per_replica_losses = self.strategy.experimental_run_v2(
             self.step_fn,
-            args=(images, False),
+            args=(images, training),
         )
 
         # Agregates all the replicas results
@@ -98,6 +99,7 @@ class Tester(object):
             axis=None,
         )
 
+    @tf.function
     def step_fn(self, images, training=False):
         """
         Run a single step that calculates and return metrics.
