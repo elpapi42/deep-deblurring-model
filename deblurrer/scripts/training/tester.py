@@ -79,18 +79,7 @@ class Tester(object):
         Returns:
             Loss and metrics for this step
         """
-        real_output, fake_output, gen_images = self.gan_forward_pass(images)
-
-        # Calculate and return losses
-        return (
-            generator_loss(
-                gen_images,
-                images['sharp'],
-                fake_output,
-                self.loss_network,
-            ),
-            discriminator_loss(real_output, fake_output),
-        )
+        return self.get_loss_over_batch(images, training=False)
 
     def print_metrics(self, metrics, preffix=''):
         """
@@ -151,6 +140,34 @@ class Tester(object):
             self.discriminator(sharp_images, training=False),
             self.discriminator(generated_images, training=False),
             generated_images['generated'],
+        )
+
+    def get_loss_over_batch(self, images, training=False):
+        """
+        Compute losses of the GAN over a batch of images.
+
+        Args:
+            images (dict): Sharp/Blur image batches of 4d tensors
+            training (bool): If the forward pass is part of a training step
+        
+        Returns:
+            Losses of the generator and discriminator networks
+        """
+        # Forward propagates the supplied batch of images.
+        real_output, fake_output, gen_images = self.gan_forward_pass(
+            images,
+            training=training,
+        )
+
+        # Calculate and return losses
+        return (
+            generator_loss(
+                gen_images,
+                images['sharp'],
+                fake_output,
+                self.loss_network,
+            ),
+            discriminator_loss(real_output, fake_output),
         )
 
     def get_loss_network(self):

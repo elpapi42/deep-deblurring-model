@@ -141,20 +141,11 @@ class Trainer(Tester):
             Loss and metrics for this step
         """
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            # Forward pass
-            real_output, fake_output, gen_images = self.gan_forward_pass(
+            # Forward propagates the supplied batch of images and get losses.
+            gen_loss, disc_loss = self.get_loss_over_batch(
                 images,
                 training=True,
             )
-
-            # Calc losses
-            gen_loss = generator_loss(
-                gen_images,
-                images['sharp'],
-                fake_output,
-                self.loss_network,
-            )
-            disc_loss = discriminator_loss(real_output, fake_output)
 
             # Calculate gradients and downscale them
             self.update_weights(gen_loss, disc_loss, gen_tape, disc_tape)
