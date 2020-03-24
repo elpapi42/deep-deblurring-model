@@ -46,7 +46,7 @@ def test_step_fn(dataset):
             gen_loss, disc_loss = tester.step_fn(batch)
 
     assert tf.cast(gen_loss, dtype=tf.float16) == 0.4562630
-    assert disc_loss == 4.992206
+    assert tf.cast(disc_loss, dtype=tf.float16) == 4.992206
 
 
 def test_distributed_step(dataset):
@@ -83,7 +83,7 @@ def test_gan_forward_pass(dataset):
     assert gen_images.shape == input_images.shape
     assert real_out['local'].shape == [2, 1]
     assert fake_out['global'].shape == [2, 1]
-    assert fake_out['global'][0][0] == 0.48832405
+    assert tf.cast(fake_out['global'][0][0], dtype=tf.float16) == 0.48832405
 
 
 def test_get_loss_network(dataset):
