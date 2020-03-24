@@ -10,22 +10,7 @@ from deblurrer.model.losses import ragan_ls_loss
 from deblurrer.model.losses import discriminator_loss
 from deblurrer.model.losses import generator_loss
 from deblurrer.model.losses import feature_reconstruction_loss
-
-
-@pytest.fixture()
-def loss_network():
-    """
-    Mock loss network.
-
-    Returns:
-        VGG19 based loss network
-    """
-    vgg19 = tf.keras.applications.VGG19(include_top=False)
-
-    return tf.keras.Model(
-        inputs=vgg19.inputs,
-        outputs=vgg19.get_layer(name='block3_conv3').output,
-    )
+from tests.fixtures import loss_network
 
 
 def test_ragan_ls_loss():
