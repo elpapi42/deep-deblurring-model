@@ -8,6 +8,7 @@ This module will eclusively contain training logic.
 """
 
 from sys import stdout
+from datetime import datetime
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -26,6 +27,7 @@ class Trainer(Tester):
         gen_optimizer,
         disc_optimizer,
         strategy,
+        output_folder='',
     ):
         """
         Init the Trainer required Objects.
@@ -36,8 +38,11 @@ class Trainer(Tester):
             gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
             disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
             strategy (tf.distribute.Strategy): Distribution strategy
+            output_folder (str): Where to store images for performance test
         """
         super().__init__(generator, discriminator, strategy)
+
+        self.output_folder = output_folder
 
         # Retrieves if current global policy is mixed presicion
         gp_name = global_policy().name
@@ -73,6 +78,12 @@ class Trainer(Tester):
         gen_train_loss = tf.keras.metrics.Mean(name='gen_train_loss')
         disc_train_loss = tf.keras.metrics.Mean(name='disc_train_loss')
 
+        # Retrieve train call start time and generate a folder for this run
+        results_folder = '{folder}/{subfolder}'.format(
+            folder=self.output_folder,
+            subfolder=datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+        )
+
         for epoch in range(epochs):
             # Jump to next line if verbose, for pretty formatting
             if (verbose):
@@ -100,7 +111,10 @@ class Trainer(Tester):
 
             # If thereis validation dataset, do cross validation
             if (valid_dataset):
-                gen_valid_loss, disc_valid_loss = self.test(valid_dataset)
+                gen_valid_loss, disc_valid_loss = self.test(
+                    valid_dataset,
+                    results_folder,
+                )
                 metrics += [gen_valid_loss, disc_valid_loss]
 
             # Print final metrics of the epoch
