@@ -8,14 +8,12 @@ This module will eclusively contain training logic.
 """
 
 from sys import stdout
-import os
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 from tensorflow.keras.mixed_precision.experimental import global_policy
 
 from deblurrer.scripts.training import Tester
-from deblurrer.model.losses import discriminator_loss, generator_loss
 
 
 class Trainer(Tester):
