@@ -68,6 +68,14 @@ class Tester(object):
                     preffix='Test:',
                 )
 
+        for image in dataset.take(1).unbatch().batch(1).take(1):
+            sharp = self.generator(image['blur'])
+            sharp = (sharp * 128) + 127
+            sharp = tf.cast(sharp, dtype=tf.uint8)
+
+            encoded = tf.io.encode_jpeg(sharp)
+            tf.io.write_file('test_image', encoded)
+
         # Return mean loss across all the batches
         return gen_loss_metric, disc_loss_metric
 
