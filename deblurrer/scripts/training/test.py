@@ -23,6 +23,7 @@ def run(
     generator=None,
     discriminator=None,
     strategy=None,
+    output_folder='',
 ):
     """
     Run the training script.
@@ -32,6 +33,7 @@ def run(
         generator (tf.keras.Model): FPN Generator
         discriminator (tf.keras.Model): DS Discriminator
         strategy (tf.distributed.Strategy): Distribution strategy
+        output_folder (str): Where to store images for performance test
     """
     # Create validation dataset
     test_dataset = get_dataset(
@@ -72,7 +74,7 @@ def run(
             generator,
             discriminator,
             strategy,
-            output_folder='C:/Users/whitm/Desktop/CodeProjects/deep-deblurring/deblurrer/scripts/training',
+            output_folder,
         )
 
         tester.test(
@@ -85,17 +87,21 @@ def run(
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder
-    path = os.path.join(
+    path = os.path.dirname(
         os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
-                    os.path.dirname(
-                        os.path.abspath(__file__),
-                    ),
+                    os.path.abspath(__file__),
                 ),
             ),
         ),
+    )
+
+    tfrec_path = os.path.join(
+        path,
         os.path.join('datasets', 'tfrecords'),
     )
 
-    run(path)
+    output_path = os.path.join(path, 'output')
+
+    run(tfrec_path, output_folder=output_path)
