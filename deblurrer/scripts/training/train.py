@@ -8,13 +8,12 @@ This module will eclusively contains training logic.
 """
 
 import os
-import contextlib
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training import Tester, Trainer
+from deblurrer.scripts.training import Trainer
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 
