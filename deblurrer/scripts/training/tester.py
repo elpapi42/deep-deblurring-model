@@ -87,7 +87,7 @@ class Tester(object):
             Loss and metrics for this step
         """
         # Execute a distributed step on each replica
-        per_replica_losses = self.strategy.experimental_run_v2(
+        per_replica_losses = self.strategy.run(
             self.step_fn,
             args=(images, training),
         )
