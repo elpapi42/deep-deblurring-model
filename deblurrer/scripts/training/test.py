@@ -38,7 +38,7 @@ def run(
     # Create validation dataset
     test_dataset = get_dataset(
         path,
-        name='test',
+        name='train',
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
@@ -74,11 +74,11 @@ def run(
             generator,
             discriminator,
             strategy,
-            output_folder,
         )
 
         tester.test(
             test_dataset,
+            output_folder,
             verbose=True,
         )
 
