@@ -1,5 +1,5 @@
 grpcio == 1.27.2
 kaggle
 numpy
-tensorflow >= 2.2.0rc0
+tensorflow >= 2.2.0rc2
 pandas

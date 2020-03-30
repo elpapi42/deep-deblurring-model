@@ -54,6 +54,3 @@ def test_trainer_train(dataset):
     # Check if weights receive updates
     weights_delta = np.abs(pre_weights - post_weights)
     assert np.mean(weights_delta) > 0.0
-    
-    
-    
