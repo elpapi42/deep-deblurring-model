@@ -100,7 +100,7 @@ def feature_reconstruction_loss(gen_images, sharp_images, loss_network):
     loss = tf.square(loss)
     loss = tf.divide(
         loss,
-        tf.cast(tf.math.reduce_prod(gen_output.shape[1:]), dtype=tf.float32),
+        tf.cast(tf.math.reduce_prod(gen_output.shape[1:]), dtype=loss.dtype),
     )
     loss = tf.reduce_mean(loss)
 
