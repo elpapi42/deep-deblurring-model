@@ -39,8 +39,8 @@ def test_distributed_step(dataset):
         for batch in dataset.take(1):
             gen_loss, disc_loss = tester.distributed_step(batch)
 
-    assert gen_loss == 1.36793
-    assert disc_loss == 5.0054493
+    assert tf.cast(gen_loss, dtype=tf.float16) == 1.36793
+    assert tf.cast(disc_loss, dtype=tf.float16) == 5.0054493
 
 
 def test_gan_forward_pass(dataset):
