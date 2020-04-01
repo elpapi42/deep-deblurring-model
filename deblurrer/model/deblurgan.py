@@ -97,12 +97,22 @@ class DeblurGAN(Model):
 
             disc_loss = discriminator_loss(real_output, fake_output)
 
+        # Update generator params
         self._minimize(
             self.distribute_strategy,
             gen_tape,
             self.optimizer[0],
             gen_loss,
             self.generator.trainable_variables,
+        )
+
+        # Update discriminator params
+        self._minimize(
+            self.distribute_strategy,
+            disc_tape,
+            self.optimizer[1],
+            disc_loss,
+            self.discriminator.trainable_variables,
         )
 
         return {'gen_loss': gen_loss, 'disc_loss': disc_loss}
@@ -128,7 +138,7 @@ class DeblurGAN(Model):
         """
         This code was taken from Tensorflow source code.
         this is not exposed trought the public API
-        
+
         Minimizes loss for one step by updating `trainable_variables`.
         This is roughly equivalent to
         ```python
