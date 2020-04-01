@@ -13,6 +13,7 @@ import tensorflow as tf
 from tensorflow.keras import layers, Model
 
 from deblurrer.model import FPNGenerator, DoubleScaleDiscriminator
+from deblurrer.model.losses import discriminator_loss, generator_loss
 
 
 class DeblurGAN(Model):
@@ -29,6 +30,8 @@ class DeblurGAN(Model):
 
         self.generator = FPNGenerator(channels)
         self.discriminator = DoubleScaleDiscriminator()
+
+        self.loss_network = self.get_loss_network()
 
     def call(self, inputs):
         """
@@ -77,6 +80,36 @@ class DeblurGAN(Model):
             values of the `Model`'s metrics are returned. Example:
             `{'loss': 0.2, 'accuracy': 0.7}`.
         """
-        real_output, fake_output, gen_images = self(datas)
+        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
+            real_output, fake_output, gen_images = self(datas)
+
+            sharp, _ = tf.unstack(datas, axis=1)
+
+            # Calculate losses
+            gen_loss = generator_loss(
+                gen_images,
+                sharp,
+                fake_output,
+                self.loss_network,
+            )
+
+            disc_loss = discriminator_loss(real_output, fake_output)
 
         return {'loss': 0.0}
+
+    def get_loss_network(self):
+        """
+        Build model based on VGG19.
+
+        The model will output conv3_3 layer output
+        the remaining architecture will be discarded
+
+        Returns:
+            Loss network based on VGG19
+        """
+        vgg19 = tf.keras.applications.VGG19(include_top=False)
+
+        return tf.keras.Model(
+            inputs=vgg19.inputs,
+            outputs=vgg19.get_layer(name='block3_conv3').output,
+        )
