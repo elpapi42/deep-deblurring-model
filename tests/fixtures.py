@@ -14,16 +14,9 @@ def dataset():
     Returns:
         tensorflow dataset
     """
-    def stack(images):
-        return {
-            'sharp': images,
-            'blur': images,
-        }
-
-    images = tf.random.normal([10, 32, 32, 3], seed=1)
+    images = tf.random.normal([10, 2, 32, 32, 3], seed=1)
 
     dset = tf.data.Dataset.from_tensor_slices(images)
-    dset = dset.map(stack)
     dset = dset.batch(2)
 
     return dset

@@ -58,16 +58,14 @@ def transform(example):
     This fn is vectorized
 
     Args:
-        example (tf.Tensor): ully parsed, decoded and loaded sharp/blur pair
+        example (tf.Tensor): fully parsed, decoded and loaded sharp/blur pair
 
     Returns:
         batch of transformed sharp/blur pairs tensor(Rank 5)
 
     """
     # Swaps batch dimension to be second, this make calcs easier in the future
-    example = tf.transpose(example, [1, 0, 2, 3, 4])
-
-    sharp, blur = tf.unstack(example)
+    sharp, blur = tf.unstack(example, axis=1)
 
     # Generates a random resolution multiplier of 256
     rnd_size = tf.multiply(
@@ -77,15 +75,10 @@ def transform(example):
 
     # Resize images to a random res between 256 and 1440
     sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
-    sharp = (sharp - 127.0) / 128.0
-
     blur = tf.image.resize(blur, [rnd_size, rnd_size])
-    blur = (blur - 127.0) / 128.0
 
-    example = {
-        'sharp': sharp,
-        'blur': blur,
-    }
+    example = tf.stack([sharp, blur], axis=1)
+    example = (example - 127.0) / 128.0
 
     return example
 
@@ -182,7 +175,7 @@ def run(path):
     dataset = get_dataset(path, 'train', batch_size=8, use_cache=False)
 
     for exam in dataset.take(1):
-        print(exam['sharp'])
+        print(exam.shape)
 
     epoch_time(dataset, 1)
 
