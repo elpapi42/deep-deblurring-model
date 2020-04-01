@@ -10,7 +10,9 @@ like Resnet or Inception
 """
 
 import tensorflow as tf
-from tensorflow.keras import layers, Model
+from tensorflow.keras import Model
+from tensorflow.python.keras.mixed_precision.experimental import loss_scale_optimizer as lso
+from tensorflow.python.distribute import parameter_server_strategy
 
 from deblurrer.model import FPNGenerator, DoubleScaleDiscriminator
 from deblurrer.model.losses import discriminator_loss, generator_loss
@@ -95,7 +97,15 @@ class DeblurGAN(Model):
 
             disc_loss = discriminator_loss(real_output, fake_output)
 
-        return {'loss': 0.0}
+        self._minimize(
+            self.distribute_strategy,
+            gen_tape,
+            self.optimizer[0],
+            gen_loss,
+            self.generator.trainable_variables,
+        )
+
+        return {'gen_loss': gen_loss, 'disc_loss': disc_loss}
 
     def get_loss_network(self):
         """
@@ -113,3 +123,61 @@ class DeblurGAN(Model):
             inputs=vgg19.inputs,
             outputs=vgg19.get_layer(name='block3_conv3').output,
         )
+
+    def _minimize(self, strategy, tape, optimizer, loss, trainable_variables):
+        """
+        This code was taken from Tensorflow source code.
+        this is not exposed trought the public API
+        
+        Minimizes loss for one step by updating `trainable_variables`.
+        This is roughly equivalent to
+        ```python
+        gradients = tape.gradient(loss, trainable_variables)
+        self.optimizer.apply_gradients(zip(gradients, trainable_variables))
+        ```
+        However, this function also applies gradient clipping and loss scaling if the
+        optimizer is a LossScaleOptimizer.
+        Args:
+            strategy: `tf.distribute.Strategy`.
+            tape: A gradient tape. The loss must have been computed under this tape.
+            optimizer: The optimizer used to minimize the loss.
+            loss: The loss tensor.
+            trainable_variables: The variables that will be updated in order to minimize
+            the loss.
+        """
+
+        with tape:
+            if isinstance(optimizer, lso.LossScaleOptimizer):
+                loss = optimizer.get_scaled_loss(loss)
+
+        gradients = tape.gradient(loss, trainable_variables)
+
+        # Whether to aggregate gradients outside of optimizer. This requires support
+        # of the optimizer and doesn't work with ParameterServerStrategy and
+        # CentralStroageStrategy.
+        aggregate_grads_outside_optimizer = (
+            optimizer._HAS_AGGREGATE_GRAD and not isinstance(
+                strategy.extended,
+                parameter_server_strategy.ParameterServerStrategyExtended,
+            ),
+        )
+
+        if aggregate_grads_outside_optimizer:
+            # We aggregate gradients before unscaling them, in case a subclass of
+            # LossScaleOptimizer all-reduces in fp16. All-reducing in fp16 can only be
+            # done on scaled gradients, not unscaled gradients, for numeric stability.
+            gradients = optimizer._aggregate_gradients(zip(gradients, trainable_variables))
+
+        if isinstance(optimizer, lso.LossScaleOptimizer):
+            gradients = optimizer.get_unscaled_gradients(gradients)
+
+        gradients = optimizer._clip_gradients(gradients)
+
+        if trainable_variables:
+            if aggregate_grads_outside_optimizer:
+                optimizer.apply_gradients(
+                    zip(gradients, trainable_variables),
+                    experimental_aggregate_gradients=False,
+                )
+            else:
+                optimizer.apply_gradients(zip(gradients, trainable_variables))
