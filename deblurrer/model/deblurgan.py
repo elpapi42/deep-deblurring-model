@@ -35,34 +35,25 @@ class DeblurGAN(Model):
         Forward propagates the supplied batch of images.
 
         Args:
-            inputs (dict): Sharp/Blur image batches of 4d tensors
+            inputs (tf.Tensor): shape [batch, 2, h, w, chnls]
 
         Returns:
             Output of the GAN, including generated images
         """
+        # Unstack the two images batches
+        sharp, blur = tf.unstack(inputs, axis=1)
+
         # Forward pass generator with blurred images
-        generated_images = self.generator(inputs['blur'])
-
-        # Repeat sharp images for get real_output
-        sharp_images = {
-            'sharp': inputs['sharp'],
-            'generated': inputs['sharp'],
-        }
-
-        # Stack gen images and sharp images for get fake_output
-        generated_images = {
-            'sharp': inputs['sharp'],
-            'generated': generated_images,
-        }
+        gen_images = self.generator(blur)
 
         # Forward pass discriminator with generated and real images
         return (
-            self.discriminator(sharp_images),
-            self.discriminator(generated_images),
-            generated_images['generated'],
+            self.discriminator([sharp, sharp]),
+            self.discriminator([sharp, gen_images]),
+            gen_images,
         )
 
-    def train_step(self, data):
+    def train_step(self, datas):
         """
         The logic for one training step.
 
@@ -86,8 +77,6 @@ class DeblurGAN(Model):
             values of the `Model`'s metrics are returned. Example:
             `{'loss': 0.2, 'accuracy': 0.7}`.
         """
-        # These are the only transformations `Model.fit` applies to user-input
-        # data when a `tf.data.Dataset` is provided. These utilities will be exposed
-        # publicly.
+        real_output, fake_output, gen_images = self(datas)
 
         return {'loss': 0.0}
