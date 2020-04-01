@@ -22,8 +22,6 @@ class DoubleScaleDiscriminator(Model):
     Analize the full image for predict if its generated or not
     parallel, check patch of the imput image and average its probs
     of being real or generated
-
-    The input must be tensor with shape [batch, 2, height, width, chnls]
     """
 
     def __init__(self):
@@ -36,6 +34,8 @@ class DoubleScaleDiscriminator(Model):
     def call(self, inputs):
         """
         Forward call of the Model.
+
+        Input[0] will stand for the sharp image of reference
 
         Args:
             inputs (list): two tensors shape [batch, height, width, chnls]

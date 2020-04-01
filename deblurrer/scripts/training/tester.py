@@ -159,26 +159,16 @@ class Tester(object):
         Returns:
             Output of the GAN, including generated images
         """
+        sharp, blur = tf.unstack(images, axis=1)
+
         # Forward pass generator with blurred images
-        generated_images = self.generator(images['blur'], training=False)
-
-        # Repeat sharp images for get real_output
-        sharp_images = {
-            'sharp': images['sharp'],
-            'generated': images['sharp'],
-        }
-
-        # Stack gen images and sharp images for get fake_output
-        generated_images = {
-            'sharp': images['sharp'],
-            'generated': generated_images,
-        }
+        generated_images = self.generator(blur, training=training)
 
         # Forward pass discriminator with generated and real images
         return (
-            self.discriminator(sharp_images, training=False),
-            self.discriminator(generated_images, training=False),
-            generated_images['generated'],
+            self.discriminator([sharp, sharp], training=training),
+            self.discriminator([sharp, generated_images], training=training),
+            generated_images,
         )
 
     def get_loss_over_batch(self, images, training=False):
@@ -198,11 +188,12 @@ class Tester(object):
             training=training,
         )
 
+        sharp, _ = tf.unstack(images, axis=1)
         # Calculate and return losses
         return (
             generator_loss(
                 gen_images,
-                images['sharp'],
+                sharp,
                 fake_output,
                 self.loss_network,
             ),
