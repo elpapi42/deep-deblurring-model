@@ -21,8 +21,7 @@ from deblurrer.model import DeblurGAN
 
 def run(
     path,
-    generator=None,
-    discriminator=None,
+    model=None,
     gen_optimizer=None,
     disc_optimizer=None,
     strategy=None,
@@ -33,12 +32,15 @@ def run(
 
     Args:
         path (str): path from where to load tfrecords
-        generator (tf.keras.Model): FPN Generator
-        discriminator (tf.keras.Model): DS Discriminator
+        model (tf.keras.Model): DeblurGAN model
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
         strategy (tf.distributed.Strategy): Distribution strategy
         output_folder (str): Where to store images for performance test
+
+    Returns:
+        model, generator optimizer, discriminator optimizer and strategy
+        in that order
     """
     # Create train dataset
     train_dataset = get_dataset(
@@ -78,16 +80,17 @@ def run(
 
     with strategy.scope():
         # Instantiate models and optimizers
-        if (generator is None):
-            generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
-        if (discriminator is None):
-            discriminator = DoubleScaleDiscriminator()
+        if (model is None):
+            model = DeblurGAN(int(os.environ.get('FPN_CHANNELS')))
+        if (gen_optimizer is None):
+            gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
+        if (disc_optimizer is None):
+            disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
 
-        model = DeblurGAN(int(os.environ.get('FPN_CHANNELS')))
         model.compile(
             optimizer=[
-                tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR'))),
-                tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR'))),
+                gen_optimizer,
+                disc_optimizer,
             ],
         )
 
@@ -96,10 +99,10 @@ def run(
 
         model.fit(
             train_dataset,
-            epochs=int(os.environ['EPOCHS'])
+            epochs=int(os.environ['EPOCHS']),
         )
 
-    return generator, discriminator, gen_optimizer, disc_optimizer, strategy
+    return model, gen_optimizer, disc_optimizer, strategy
 
 
 if (__name__ == '__main__'):
