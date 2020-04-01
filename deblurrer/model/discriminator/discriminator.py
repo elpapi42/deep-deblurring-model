@@ -23,7 +23,7 @@ class DoubleScaleDiscriminator(Model):
     parallel, check patch of the imput image and average its probs
     of being real or generated
 
-    The input must be python dictionary with two keys, sharp/blur
+    The input must be tensor with shape [batch, 2, height, width, chnls]
     """
 
     def __init__(self):
@@ -38,11 +38,14 @@ class DoubleScaleDiscriminator(Model):
         Forward call of the Model.
 
         Args:
-            inputs (tf.Tensor): Dict of sharp/generated img w Shape [btch, h, w, ch]
+            inputs (list): two tensors shape [batch, height, width, chnls]
 
         Returns:
             Dict with local/global keys w/ tensors shape [batch, 1]
         """
+        # Concat inputs in channels-wise
+        inputs = tf.concat([inputs[0], inputs[1]], axis=-1)
+
         local = self.local(inputs)
         dglobal = self.dglobal(inputs)
 

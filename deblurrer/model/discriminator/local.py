@@ -49,16 +49,13 @@ class LocalDiscriminator(Model):
         Forward call of the Model.
 
         Args:
-            inputs (tf.Tensor): Dict of sharp/generated img w Shape [btch, h, w, ch]
+            inputs (tf.Tensor): with Shape [btch, h, w, 6]
 
         Returns:
-            Averaged probs of the generated image to be fake, shape [batch, 1]
+            Averaged probs of the generated image to be real, shape [batch, 1]
         """
-        # Concat inputs in channels-wise
-        outputs = tf.concat([inputs['sharp'], inputs['generated']], axis=-1)
-
         # Conv feedforward
-        outputs = self.conv_a(outputs)
+        outputs = self.conv_a(inputs)
         outputs = self.conv_b(outputs)
         outputs = self.conv_c(outputs)
         outputs = self.conv_d(outputs)
