@@ -91,6 +91,8 @@ def run(
             ],
         )
 
+        model.fit(train_dataset)
+
     return generator, discriminator, gen_optimizer, disc_optimizer, strategy
 
 
