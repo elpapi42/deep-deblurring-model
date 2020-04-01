@@ -94,7 +94,10 @@ def run(
         for batch in train_dataset.take(1):
             model(batch)
 
-        model.fit(train_dataset)
+        model.fit(
+            train_dataset,
+            epochs=int(os.environ['EPOCHS'])
+        )
 
     return generator, discriminator, gen_optimizer, disc_optimizer, strategy
 
