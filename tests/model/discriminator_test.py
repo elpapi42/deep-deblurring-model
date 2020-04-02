@@ -16,15 +16,10 @@ def test_local_discriminator():
     discrim = LocalDiscriminator()
 
     # Fake random image tensor
-    inputs = tf.random.uniform([1, 256, 256, 3], seed=1)
+    inputs = tf.random.uniform([1, 256, 256, 6], seed=1)
 
     # Feeds faked sharp/blur pair
-    outputs = discrim(
-        {
-            'sharp': inputs,
-            'generated': inputs,
-        }
-    )
+    outputs = discrim(inputs)
 
     # Check shape
     assert outputs.shape == (1, 1)
@@ -55,15 +50,10 @@ def test_global_discriminator():
     discrim = GlobalDiscriminator()
 
     # Fake random image tensor
-    inputs = tf.random.uniform([2, 256, 256, 3], seed=1)
+    inputs = tf.random.uniform([2, 256, 256, 6], seed=1)
 
     # Feeds faked sharp/blur pair
-    outputs = discrim(
-        {
-            'sharp': inputs,
-            'generated': inputs,
-        }
-    )
+    outputs = discrim(inputs)
 
     # Check shape
     assert outputs.shape == (2, 1)
@@ -80,12 +70,7 @@ def test_double_scale_discriminator():
     inputs = tf.random.uniform([4, 32, 32, 3], seed=1)
 
     # Feeds faked sharp/blur pair
-    outputs = discrim(
-        {
-            'sharp': inputs,
-            'generated': inputs,
-        }
-    )
+    outputs = discrim([inputs, inputs])
 
     # Check shape
     assert outputs.get('local') is not None

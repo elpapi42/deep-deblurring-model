@@ -2,9 +2,9 @@
 # coding=utf-8
 
 """
-Start the testing of the Model Architecture.
+Start the training of the Model Architecture.
 
-This module will eclusively contains testing logic.
+This module will eclusively contains training logic.
 """
 
 import os
@@ -13,15 +13,17 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training import Tester
+from deblurrer.scripts.training import Trainer
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
+from deblurrer.model import DeblurGAN
 
 
 def run(
     path,
-    generator=None,
-    discriminator=None,
+    model=None,
+    gen_optimizer=None,
+    disc_optimizer=None,
     strategy=None,
     output_folder='',
 ):
@@ -30,15 +32,27 @@ def run(
 
     Args:
         path (str): path from where to load tfrecords
-        generator (tf.keras.Model): FPN Generator
-        discriminator (tf.keras.Model): DS Discriminator
+        model (tf.keras.Model): DeblurGAN model
+        gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
+        disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
         strategy (tf.distributed.Strategy): Distribution strategy
         output_folder (str): Where to store images for performance test
+
+    Returns:
+        model, generator optimizer, discriminator optimizer and strategy
+        in that order
     """
-    # Create validation dataset
-    test_dataset = get_dataset(
+    # Create train dataset
+    train_dataset = get_dataset(
         path,
         name='train',
+        batch_size=int(os.environ.get('BATCH_SIZE')),
+    )
+
+    # Create validation dataset
+    valid_dataset = get_dataset(
+        path,
+        name='valid',
         batch_size=int(os.environ.get('BATCH_SIZE')),
     )
 
@@ -59,30 +73,36 @@ def run(
         strategy = tf.distribute.experimental.TPUStrategy(resolver)
 
         # Convert dataset to distribute datasets
-        test_dataset = strategy.experimental_distribute_dataset(test_dataset)
+        train_dataset = strategy.experimental_distribute_dataset(train_dataset)
+        valid_dataset = strategy.experimental_distribute_dataset(valid_dataset)
     elif (strategy is None):
         strategy = tf.distribute.OneDeviceStrategy(device='/gpu:0')
 
     with strategy.scope():
         # Instantiate models and optimizers
-        if (generator is None):
-            generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
-        if (discriminator is None):
-            discriminator = DoubleScaleDiscriminator()
+        if (model is None):
+            model = DeblurGAN(int(os.environ.get('FPN_CHANNELS')))
+        if (gen_optimizer is None):
+            gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
+        if (disc_optimizer is None):
+            disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
 
-        tester = Tester(
-            generator,
-            discriminator,
-            strategy,
+        model.compile(
+            optimizer=[
+                gen_optimizer,
+                disc_optimizer,
+            ],
         )
 
-        tester.test(
-            test_dataset,
-            output_folder,
-            verbose=True,
+        for batch in train_dataset.take(1):
+            model(batch)
+
+        model.fit(
+            train_dataset,
+            epochs=int(os.environ['EPOCHS']),
         )
 
-    return generator, discriminator, strategy
+    return model, gen_optimizer, disc_optimizer, strategy
 
 
 if (__name__ == '__main__'):

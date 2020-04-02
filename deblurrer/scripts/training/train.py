@@ -8,13 +8,12 @@ This module will eclusively contains training logic.
 """
 
 import os
-import contextlib
 
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training import Tester, Trainer
+from deblurrer.scripts.training import Trainer
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 
@@ -26,6 +25,7 @@ def run(
     gen_optimizer=None,
     disc_optimizer=None,
     strategy=None,
+    output_folder='',
 ):
     """
     Run the training script.
@@ -37,6 +37,7 @@ def run(
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
         strategy (tf.distributed.Strategy): Distribution strategy
+        output_folder (str): Where to store images for performance test
     """
     # Create train dataset
     train_dataset = get_dataset(
@@ -91,6 +92,7 @@ def run(
             gen_optimizer,
             disc_optimizer,
             strategy,
+            output_folder,
         )
 
         trainer.train(
@@ -105,17 +107,21 @@ def run(
 
 if (__name__ == '__main__'):
     # Get the path to the tfrcords folder
-    path = os.path.join(
+    path = os.path.dirname(
         os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
-                    os.path.dirname(
-                        os.path.abspath(__file__),
-                    ),
+                    os.path.abspath(__file__),
                 ),
             ),
         ),
+    )
+
+    tfrec_path = os.path.join(
+        path,
         os.path.join('datasets', 'tfrecords'),
     )
 
-    run(path)
+    output_path = os.path.join(path, 'output')
+
+    run(tfrec_path, output_folder=output_path)
