@@ -100,6 +100,7 @@ def run(
         model.fit(
             train_dataset,
             epochs=int(os.environ['EPOCHS']),
+            validation_data=valid_dataset,
         )
 
     return model, gen_optimizer, disc_optimizer, strategy
