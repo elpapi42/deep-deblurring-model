@@ -69,8 +69,13 @@ def transform(example):
 
     # Generates a random resolution multiplier of 256
     rnd_size = tf.multiply(
-        tf.random.uniform([], 1, 4, dtype=tf.int32),
-        64,
+        tf.random.uniform(
+            shape=[],
+            minval=1,
+            maxval=int(os.environ.get('IMAGE_SIZE_MULTIPLIER')) + 1,
+            dtype=tf.int32,
+        ),
+        int(os.environ.get('IMAGE_SIZE')),
     )
 
     # Resize images to a random res between 256 and 1440
