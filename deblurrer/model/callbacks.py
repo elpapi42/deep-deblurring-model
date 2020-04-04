@@ -3,6 +3,8 @@
 
 """Defines the custom callbacks used at train time."""
 
+from datetime import datetime
+
 import tensorflow as tf
 
 
@@ -12,17 +14,40 @@ class SaveImageToDisk(tf.keras.callbacks.Callback):
 
     Serves as visual performance proof of the model
     """
-    def __init__(self, path):
+    def __init__(self, path, test_image):
         """
         Init the callback.
 
         Args:
             path (str): folder where the results will be saved
+            test_image (str): image tensor for test
         """
         self.path = path
+        self.test_image = test_image
 
     def on_epoch_end(self, epoch, logs=None):
-        pass
+        """Generate and save image to disk."""
+        # Converts to encodable uint8 type
+        sharp = self.model.generator(self.test_image)
+        sharp = (sharp * 128) + 127
+        sharp = tf.cast(sharp, dtype=tf.uint8)
+
+        # Remove batch dimession from the tensor
+        sharp = tf.squeeze(sharp)
+
+        # Encodes and write image to disk
+        encoded = tf.io.encode_jpeg(sharp)
+
+        file_name = '{path}/{epoch}.jpg'.format(
+            path=self.folder,
+            epoch=epoch,
+        )
+
+        tf.io.write_file(file_name, encoded)
 
     def on_train_begin(self, logs=None):
-        pass
+        """Create a unique path for save the images o this train session."""
+        self.folder = '{path}/{datetime}.jpg'.format(
+            path=self.path,
+            datetime=datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
+        )

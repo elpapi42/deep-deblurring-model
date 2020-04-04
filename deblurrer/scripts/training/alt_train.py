@@ -95,12 +95,17 @@ def run(
         for batch in train_dataset.take(1):
             model(batch)
 
+            # This will be used for visual performance test gen
+            test_image = batch[0][1]
+            test_image = tf.reshape(test_image, shape=[1, *test_image.shape])
+            print(test_image.shape)
+
         model.fit(
             train_dataset,
             epochs=int(os.environ['EPOCHS']),
             validation_data=valid_dataset,
             callbacks=[
-                SaveImageToDisk(path=output_folder),
+                SaveImageToDisk(output_folder, test_image),
             ],
         )
 
