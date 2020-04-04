@@ -32,7 +32,7 @@ class SaveImageToDisk(tf.keras.callbacks.Callback):
         """Generate and save image to disk."""
         
         image = self.model.generator(self.blur_image)
-        self.save_image(image, epoch)
+        self.save_image(image, epoch + 1)
         
 
     def on_train_begin(self, logs=None):
