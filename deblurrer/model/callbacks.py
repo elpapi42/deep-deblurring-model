@@ -20,30 +20,20 @@ class SaveImageToDisk(tf.keras.callbacks.Callback):
 
         Args:
             path (str): folder where the results will be saved
-            test_image (str): image tensor for test
+            test_image (str): image pair tensor for test, shape [2, h, w, 3]
         """
         self.path = path
-        self.test_image = test_image
+
+        sharp_image, blur_image = tf.split(test_image, 2)
+        self.sharp_image = sharp_image
+        self.blur_image = blur_image
 
     def on_epoch_end(self, epoch, logs=None):
         """Generate and save image to disk."""
-        # Converts to encodable uint8 type
-        sharp = self.model.generator(self.test_image)
-        sharp = (sharp * 128) + 127
-        sharp = tf.cast(sharp, dtype=tf.uint8)
-
-        # Remove batch dimession from the tensor
-        sharp = tf.squeeze(sharp)
-
-        # Encodes and write image to disk
-        encoded = tf.io.encode_jpeg(sharp)
-
-        file_name = '{path}/{epoch}.jpg'.format(
-            path=self.folder,
-            epoch=epoch,
-        )
-
-        tf.io.write_file(file_name, encoded)
+        
+        image = self.model.generator(self.blur_image)
+        self.save_image(image, epoch)
+        
 
     def on_train_begin(self, logs=None):
         """Create a unique path for save the images o this train session."""
@@ -51,3 +41,30 @@ class SaveImageToDisk(tf.keras.callbacks.Callback):
             path=self.path,
             datetime=datetime.now().strftime('%Y-%m-%d_%H-%M-%S'),
         )
+
+        self.save_image(self.sharp_image, 'sharp')
+
+    def save_image(self, image, name):
+        """
+        Transform, serialize and write image to disk.
+
+        Args:
+            image (tensor): shape [h, w, 3] dtype float32
+            name (str): name for the file
+        """
+        # Converts to encodable uint8 type
+        image = (image * 128) + 127
+        image = tf.cast(image, dtype=tf.uint8)
+
+        # Remove batch dimession from the tensor
+        image = tf.squeeze(image)
+
+        # Encodes and write image to disk
+        encoded = tf.io.encode_jpeg(image)
+
+        file_name = '{path}/{name}.jpg'.format(
+            path=self.folder,
+            name=name,
+        )
+
+        tf.io.write_file(file_name, encoded)

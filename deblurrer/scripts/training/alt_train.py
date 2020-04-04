@@ -96,9 +96,7 @@ def run(
             model(batch)
 
             # This will be used for visual performance test gen
-            test_image = batch[0][1]
-            test_image = tf.reshape(test_image, shape=[1, *test_image.shape])
-            print(test_image.shape)
+            test_image = batch[0]
 
         model.fit(
             train_dataset,
