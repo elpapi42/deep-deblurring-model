@@ -13,9 +13,7 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training import Trainer
-from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import DoubleScaleDiscriminator
+from deblurrer.model.callbacks import SaveImageToDisk
 from deblurrer.model import DeblurGAN
 
 
@@ -97,10 +95,16 @@ def run(
         for batch in train_dataset.take(1):
             model(batch)
 
+            # This will be used for visual performance test gen
+            test_image = batch[0]
+
         model.fit(
             train_dataset,
             epochs=int(os.environ['EPOCHS']),
             validation_data=valid_dataset,
+            callbacks=[
+                SaveImageToDisk(output_folder, test_image),
+            ],
         )
 
     return model, gen_optimizer, disc_optimizer, strategy
