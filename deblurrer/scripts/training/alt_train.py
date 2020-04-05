@@ -92,7 +92,7 @@ def run(
             ],
         )
 
-        for batch in train_dataset.take(1):
+        for batch in train_dataset.skip(10).take(1):
             model(batch)
 
             # This will be used for visual performance test gen
