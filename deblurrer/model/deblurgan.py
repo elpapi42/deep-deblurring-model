@@ -58,51 +58,25 @@ class DeblurGAN(Model):
             gen_images,
         )
 
-    def train_step(self, datas):
+    def train_step(self, images):
         """
-        The logic for one training step.
-
-        This method can be overridden to support custom training logic.
-        This method is called by `Model.make_train_function`.
-
-        This method should contain the mathemetical logic for one step of training.
-        This typically includes the forward pass, loss calculation, backpropagation,
-        and metric updates.
-
-        Configuration details for *how* this logic is run (e.g. `tf.function` and
-        `tf.distribute.Strategy` settings), should be left to
-        `Model.make_train_function`, which can also be overridden.
+        Logic for one training step.
 
         Arguments:
-            data: A nested structure of `Tensor`s.
+            images: A nested structure of Tensors.
 
         Returns:
-            A `dict` containing values that will be passed to
-            `tf.keras.callbacks.CallbackList.on_train_batch_end`. Typically, the
-            values of the `Model`'s metrics are returned. Example:
-            `{'loss': 0.2, 'accuracy': 0.7}`.
+            Dict of Metrics of the GAN
         """
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            real_output, fake_output, gen_images = self(datas)
-
-            sharp, _ = tf.unstack(datas, axis=1)
-
-            # Calculate losses
-            gen_loss = generator_loss(
-                gen_images,
-                sharp,
-                fake_output,
-                self.loss_network,
-            )
-
-            disc_loss = discriminator_loss(real_output, fake_output)
+            metrics = self.get_metrics_over_batch(images)
 
         # Update generator params
         self._minimize(
             self.distribute_strategy,
             gen_tape,
             self.optimizer[0],
-            gen_loss,
+            metrics['gen_loss'],
             self.generator.trainable_variables,
         )
 
@@ -111,11 +85,53 @@ class DeblurGAN(Model):
             self.distribute_strategy,
             disc_tape,
             self.optimizer[1],
-            disc_loss,
+            metrics['disc_loss'],
             self.discriminator.trainable_variables,
         )
 
-        return {'gen_loss': gen_loss, 'disc_loss': disc_loss}
+        return metrics
+
+    def test_step(self, images):
+        """
+        The logic for one testing step.
+
+        Args:
+            images: A nested structure of Tensors
+
+        Returns:
+            Dict of Metrics of the GAN
+        """
+        return self.get_metrics_over_batch(images)
+
+    def get_metrics_over_batch(self, images):
+        """
+        Compute metrics of the GAN over a batch of images.
+
+        Args:
+            images (tensor): shape [batch, 2, h. w, chnls]
+
+        Returns:
+            Dict of Metrics of the GAN
+        """
+        # Forward propagates the supplied batch of images.
+        real_output, fake_output, gen_images = self(images)
+
+        sharp, _ = tf.unstack(images, axis=1)
+
+        # Calculate losses
+        gen_loss = generator_loss(
+            gen_images,
+            sharp,
+            fake_output,
+            self.loss_network,
+        )
+
+        disc_loss = discriminator_loss(real_output, fake_output)
+
+        return {
+            'gen_loss': gen_loss,
+            'disc_loss': disc_loss,
+        }
 
     def get_loss_network(self):
         """
