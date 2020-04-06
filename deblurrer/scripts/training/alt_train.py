@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.model.callbacks import SaveImageToDisk, FreezeModelForEpochs
+from deblurrer.model.callbacks import SaveImageToDisk
 from deblurrer.model import DeblurGAN
 
 
