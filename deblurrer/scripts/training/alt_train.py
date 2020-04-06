@@ -13,7 +13,7 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.model.callbacks import SaveImageToDisk
+from deblurrer.model.callbacks import SaveImageToDisk, FreezeModelForEpochs
 from deblurrer.model import DeblurGAN
 
 
@@ -24,6 +24,7 @@ def run(
     disc_optimizer=None,
     strategy=None,
     output_folder='',
+    warm_epochs=0,
 ):
     """
     Run the training script.
@@ -85,18 +86,44 @@ def run(
         if (disc_optimizer is None):
             disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
 
+        # This is for init modelweights and pickup a test sample
+        for batch in train_dataset.skip(10).take(1):
+            model(batch)
+            # This will be used for visual performance test gen
+            test_image = batch[0]
+
+        # Train GAN freezing the generator backbone
+        if (warm_epochs > 0):
+            print('Starting model warm up...')
+
+            model.generator.fpn.backbone.backbone.trainable = False
+
+            model.compile(
+                optimizer=[
+                    gen_optimizer,
+                    disc_optimizer,
+                ],
+            )
+
+            model.fit(
+                train_dataset,
+                epochs=warm_epochs,
+                validation_data=valid_dataset,
+                callbacks=[
+                    SaveImageToDisk(output_folder, test_image),
+                ],
+            )
+
+        print('Starting model training...')
+
+        model.generator.fpn.backbone.backbone.trainable = True
+
         model.compile(
             optimizer=[
                 gen_optimizer,
                 disc_optimizer,
             ],
         )
-
-        for batch in train_dataset.skip(10).take(1):
-            model(batch)
-
-            # This will be used for visual performance test gen
-            test_image = batch[0]
 
         model.fit(
             train_dataset,
@@ -129,4 +156,8 @@ if (__name__ == '__main__'):
 
     output_path = os.path.join(path, 'output')
 
-    run(tfrec_path, output_folder=output_path)
+    run(
+        tfrec_path,
+        output_folder=output_path,
+        warm_epochs=int(os.environ['WARM_EPOCHS']),
+    )
