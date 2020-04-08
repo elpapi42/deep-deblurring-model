@@ -55,7 +55,7 @@ class GlobalDiscriminator(Model):
                 ),
             )
 
-        self.conv_out = layers.Conv2D(64, 2, 2, padding='same')
+        self.conv_out = layers.Conv2D((conv_count + 1) * filters, 2, 2, padding='same')
 
         self.global_pool = layers.GlobalMaxPool2D()
         self.dense = layers.Dense(1, activation='sigmoid')
