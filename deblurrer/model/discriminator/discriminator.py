@@ -24,12 +24,18 @@ class DoubleScaleDiscriminator(Model):
     of being real or generated
     """
 
-    def __init__(self):
-        """Init the layers of the model."""
+    def __init__(self, filters=12, conv_count=4):
+        """
+        Init the layers of the model.
+
+        Args:
+            filters (int): Base number of filters, scaled by conv_count
+            conv_count (int): Number of leaky conv layers to use
+        """
         super().__init__()
 
         self.local = LocalDiscriminator()
-        self.dglobal = GlobalDiscriminator()
+        self.dglobal = GlobalDiscriminator(filters, conv_count)
 
     def call(self, inputs):
         """

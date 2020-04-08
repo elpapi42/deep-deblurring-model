@@ -93,7 +93,7 @@ class LeakyConvBlock(ConvBlock):
             alpha (float): LeakyReLU alpha param
             override_activation (bool): if calculate or not the relu activation
         """
-        super().__init__(filters, kernel_size, override_activation)
+        super().__init__(filters, kernel_size, strides, override_activation)
 
         self.conv = layers.Conv2D(
             filters,

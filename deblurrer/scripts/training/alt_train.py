@@ -80,7 +80,11 @@ def run(
     with strategy.scope():
         # Instantiate models and optimizers
         if (model is None):
-            model = DeblurGAN(int(os.environ.get('FPN_CHANNELS')))
+            model = DeblurGAN(
+                channels=int(os.environ.get('FPN_CHANNELS')),
+                filters=int(os.environ.get('DISC_FILTERS')),
+                conv_count=int(os.environ.get('DISC_CONV_COUNT')),
+            )
         if (gen_optimizer is None):
             gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
         if (disc_optimizer is None):
@@ -91,6 +95,8 @@ def run(
             model(batch)
             # This will be used for visual performance test gen
             test_image = batch[0]
+
+        model.summary()
 
         # Train GAN freezing the generator backbone
         if (warm_epochs > 0):

@@ -67,6 +67,7 @@ class ConvBlock(Model):
         self,
         filters,
         kernel_size,
+        strides=1,
         override_activation=False,
     ):
         """
@@ -75,6 +76,7 @@ class ConvBlock(Model):
         Args:
             filters (int): Number of filters of the Conv Layer
             kernel_size (int): Scalar or tuple, size of the kernel windows
+            strides (int): Strides of the convulution
             override_activation (bool): if calculate or not the relu activation
         """
         super().__init__()
