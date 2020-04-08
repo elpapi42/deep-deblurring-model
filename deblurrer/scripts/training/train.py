@@ -13,31 +13,33 @@ import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
-from deblurrer.scripts.training import Trainer
-from deblurrer.model.generator import FPNGenerator
-from deblurrer.model.discriminator import DoubleScaleDiscriminator
+from deblurrer.model.callbacks import SaveImageToDisk
+from deblurrer.model import DeblurGAN
 
 
 def run(
     path,
-    generator=None,
-    discriminator=None,
+    model=None,
     gen_optimizer=None,
     disc_optimizer=None,
     strategy=None,
     output_folder='',
+    warm_epochs=0,
 ):
     """
     Run the training script.
 
     Args:
         path (str): path from where to load tfrecords
-        generator (tf.keras.Model): FPN Generator
-        discriminator (tf.keras.Model): DS Discriminator
+        model (tf.keras.Model): DeblurGAN model
         gen_optimizer (tf.keras.optimizers.Optimizer): Gen Optimizer
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
         strategy (tf.distributed.Strategy): Distribution strategy
         output_folder (str): Where to store images for performance test
+
+    Returns:
+        model, generator optimizer, discriminator optimizer and strategy
+        in that order
     """
     # Create train dataset
     train_dataset = get_dataset(
@@ -77,32 +79,68 @@ def run(
 
     with strategy.scope():
         # Instantiate models and optimizers
-        if (generator is None):
-            generator = FPNGenerator(int(os.environ.get('FPN_CHANNELS')))
-        if (discriminator is None):
-            discriminator = DoubleScaleDiscriminator()
+        if (model is None):
+            model = DeblurGAN(
+                channels=int(os.environ.get('FPN_CHANNELS')),
+                filters=int(os.environ.get('DISC_FILTERS')),
+                conv_count=int(os.environ.get('DISC_CONV_COUNT')),
+            )
         if (gen_optimizer is None):
             gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
         if (disc_optimizer is None):
             disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
 
-        trainer = Trainer(
-            generator,
-            discriminator,
-            gen_optimizer,
-            disc_optimizer,
-            strategy,
-            output_folder,
+        # This is for init modelweights and pickup a test sample
+        for batch in train_dataset.skip(10).take(1):
+            model(batch)
+            # This will be used for visual performance test gen
+            test_image = batch[0]
+
+        model.summary()
+
+        # Train GAN freezing the generator backbone
+        if (warm_epochs > 0):
+            print('Starting model warm up...')
+
+            model.generator.fpn.backbone.backbone.trainable = False
+
+            model.compile(
+                optimizer=[
+                    gen_optimizer,
+                    disc_optimizer,
+                ],
+            )
+
+            model.fit(
+                train_dataset,
+                epochs=warm_epochs,
+                validation_data=valid_dataset,
+                callbacks=[
+                    SaveImageToDisk(output_folder, test_image),
+                ],
+            )
+
+        print('Starting model training...')
+
+        model.generator.fpn.backbone.backbone.trainable = True
+
+        model.compile(
+            optimizer=[
+                gen_optimizer,
+                disc_optimizer,
+            ],
         )
 
-        trainer.train(
+        model.fit(
             train_dataset,
-            int(os.environ.get('EPOCHS')),
-            valid_dataset=valid_dataset,
-            verbose=True,
+            epochs=int(os.environ['EPOCHS']),
+            validation_data=valid_dataset,
+            callbacks=[
+                SaveImageToDisk(output_folder, test_image),
+            ],
         )
 
-    return generator, discriminator, gen_optimizer, disc_optimizer, strategy
+    return model, gen_optimizer, disc_optimizer, strategy
 
 
 if (__name__ == '__main__'):
@@ -124,4 +162,8 @@ if (__name__ == '__main__'):
 
     output_path = os.path.join(path, 'output')
 
-    run(tfrec_path, output_folder=output_path)
+    run(
+        tfrec_path,
+        output_folder=output_path,
+        warm_epochs=int(os.environ['WARM_EPOCHS']),
+    )
