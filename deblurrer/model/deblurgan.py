@@ -21,17 +21,19 @@ from deblurrer.model.losses import discriminator_loss, generator_loss
 class DeblurGAN(Model):
     """Define the FPN Generator Arch."""
 
-    def __init__(self, channels=128):
+    def __init__(self, channels=128, filters=12, conv_count=4):
         """
         Init the GAN instance.
 
         Args:
             channels (int): Number of std channels the FPN will manage
+            filters (int): Base number of filters, scaled by conv_count
+            conv_count (int): Number of leaky conv layers to use
         """
         super().__init__()
 
         self.generator = FPNGenerator(channels)
-        self.discriminator = DoubleScaleDiscriminator()
+        self.discriminator = DoubleScaleDiscriminator(filters, conv_count)
 
         self.loss_network = self.get_loss_network()
 
