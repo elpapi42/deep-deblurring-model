@@ -9,6 +9,7 @@ This module will eclusively contains training logic.
 
 import os
 
+from dotenv import load_dotenv
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
@@ -24,6 +25,7 @@ def run(
     disc_optimizer=None,
     strategy=None,
     output_folder='',
+    warm_epochs=0,
 ):
     """
     Run the training script.
@@ -79,11 +81,49 @@ def run(
     with strategy.scope():
         # Instantiate models and optimizers
         if (model is None):
-            model = DeblurGAN(int(os.environ.get('FPN_CHANNELS')))
+            model = DeblurGAN(
+                channels=int(os.environ.get('FPN_CHANNELS')),
+                filters=int(os.environ.get('DISC_FILTERS')),
+                conv_count=int(os.environ.get('DISC_CONV_COUNT')),
+            )
         if (gen_optimizer is None):
             gen_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('GEN_LR')))
         if (disc_optimizer is None):
             disc_optimizer = tf.keras.optimizers.Adam(float(os.environ.get('DISC_LR')))
+
+        # This is for init modelweights and pickup a test sample
+        for batch in train_dataset.skip(10).take(1):
+            model(batch)
+            # This will be used for visual performance test gen
+            test_image = batch[0]
+
+        model.summary()
+
+        # Train GAN freezing the generator backbone
+        if (warm_epochs > 0):
+            print('Starting model warm up...')
+
+            model.generator.fpn.backbone.backbone.trainable = False
+
+            model.compile(
+                optimizer=[
+                    gen_optimizer,
+                    disc_optimizer,
+                ],
+            )
+
+            model.fit(
+                train_dataset,
+                epochs=warm_epochs,
+                validation_data=valid_dataset,
+                callbacks=[
+                    SaveImageToDisk(output_folder, test_image),
+                ],
+            )
+
+        print('Starting model training...')
+
+        model.generator.fpn.backbone.backbone.trainable = True
 
         model.compile(
             optimizer=[
@@ -91,12 +131,6 @@ def run(
                 disc_optimizer,
             ],
         )
-
-        for batch in train_dataset.skip(10).take(1):
-            model(batch)
-
-            # This will be used for visual performance test gen
-            test_image = batch[0]
 
         model.fit(
             train_dataset,
@@ -122,6 +156,10 @@ if (__name__ == '__main__'):
         ),
     )
 
+    # Load .env vars
+    dotenv_path = os.path.join(path, '.env')
+    load_dotenv(dotenv_path)
+
     tfrec_path = os.path.join(
         path,
         os.path.join('datasets', 'tfrecords'),
@@ -129,4 +167,8 @@ if (__name__ == '__main__'):
 
     output_path = os.path.join(path, 'output')
 
-    run(tfrec_path, output_folder=output_path)
+    run(
+        tfrec_path,
+        output_folder=output_path,
+        warm_epochs=int(os.environ['WARM_EPOCHS']),
+    )

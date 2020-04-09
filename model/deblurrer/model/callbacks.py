@@ -43,6 +43,7 @@ class SaveImageToDisk(tf.keras.callbacks.Callback):
         )
 
         self.save_image(self.sharp_image, 'sharp')
+        self.save_image(self.blur_image, 'blur')
 
     def save_image(self, image, name):
         """
