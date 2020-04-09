@@ -3,3 +3,4 @@ kaggle
 numpy
 tensorflow >= 2.2.0rc2
 pandas
+python-dotenv
