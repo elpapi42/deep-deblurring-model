@@ -36,5 +36,4 @@ jobs:
     
     - name: Test with pytest
       run: |
-        PYTHONPATH=${PYTHONPATH}:/home/runner/work/deep-deblurring/deep-deblurring/backend:$(pwd)
         pytest
