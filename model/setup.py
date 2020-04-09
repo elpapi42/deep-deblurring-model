@@ -4,8 +4,10 @@
 """Setup and install the package and all the dependencies."""
 
 from setuptools import setup, find_packages
+import os
 
-with open('requirements.txt') as pro:
+parent_folder = os.path.dirname(os.path.abspath(__file__))
+with open(os.path.join(parent_folder, 'requirements.txt')) as pro:
     INSTALL_REQUIRES = pro.read().split('\n')
 
 setup(
@@ -13,9 +15,8 @@ setup(
     author_email='whitman-2@hotmail.com',
     name='deblurrer',
     license='MIT',
-    description='Image Deblurring using Deep Learning Architecture',
+    description='Image Deblurring using GAN',
     version='1.0.0',
-    url='',
     packages=find_packages(),
     include_package_data=True,
     python_requires='>=3.6',

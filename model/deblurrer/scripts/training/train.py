@@ -9,6 +9,7 @@ This module will eclusively contains training logic.
 
 import os
 
+from dotenv import load_dotenv
 import tensorflow as tf
 from tensorflow.keras.mixed_precision import experimental as mixed_precision
 
@@ -154,6 +155,10 @@ if (__name__ == '__main__'):
             ),
         ),
     )
+
+    # Load .env vars
+    dotenv_path = os.path.join(path, '.env')
+    load_dotenv(dotenv_path)
 
     tfrec_path = os.path.join(
         path,

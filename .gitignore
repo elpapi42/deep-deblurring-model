@@ -129,5 +129,5 @@ dmypy.json
 .pyre/
 
 .vscode/
-/datasets/
-/output/
+/model/datasets/
+/model/output/
