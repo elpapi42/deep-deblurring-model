@@ -21,6 +21,7 @@ class ImageByteWrapper(Model):
 
         self.model = model
 
+    #@tf.function(input_signature=[tf.TensorSpec(shape=[None, 1], dtype=tf.string)])
     def call(self, inputs):
         """
         Decode and Forward propagates the supplied image file.
@@ -31,31 +32,23 @@ class ImageByteWrapper(Model):
         Returns:
             b64 Encoded output of the model
         """
-        images = tf.unstack(inputs)
-        images_list = []
-        for image in images:
-            image = tf.squeeze(image, axis=[0])
+        def pre_input(image):
+            image = tf.squeeze(image, axis=[0],)
             image = tf.io.decode_image(image, dtype=tf.float32)
             image = (image - 127.0) / 128.0
-            images_list.append(image)
+            return image
 
-        images = tf.stack(images_list)
+        images = tf.map_fn(pre_input, inputs, dtype=tf.float32)
 
         outputs = self.model(images)
 
-        outputs = tf.unstack(outputs)
-        outputs_list = []
-        for output in outputs:
+        def post_output(output):
             output = (output * 128.0) + 127.0
             output = tf.cast(output, dtype=tf.uint8)
             output = tf.io.encode_jpeg(output)
-            outputs_list.append(output)
+            return output
 
-        return outputs_list
+        outputs = tf.map_fn(post_output, outputs, dtype=tf.string)
 
-    def string_wrapped(self):
-        """Wrape the model under string inputs/outputs types."""
-        inputs = tf.keras.layers.Inputs(dtype=tf.string)
-        outputs = self(inputs)
+        return outputs
 
-        return tf.keras.Model(inputs=inputs, outputs=outputs)

@@ -4,8 +4,7 @@ import base64
 
 from deblurrer.model import FPNGenerator, ImageByteWrapper
 
-#generator = FPNGenerator(128)
-generator = tf.keras.Sequential([layers.Conv2D(3, 2)])
+generator = FPNGenerator(128)
 
 wrap = ImageByteWrapper(generator)
 
@@ -18,4 +17,4 @@ inputs = tf.constant(
 
 outputs = wrap(inputs)
 
-print(len(outputs))
+print(outputs[0])
