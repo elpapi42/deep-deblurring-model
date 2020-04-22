@@ -21,7 +21,7 @@ class ImageByteWrapper(Model):
 
         self.model = model
 
-    #@tf.function(input_signature=[tf.TensorSpec(shape=[None, 1], dtype=tf.string)])
+    @tf.function(input_signature=[tf.TensorSpec(shape=None, dtype=tf.string)])
     def call(self, inputs):
         """
         Decode and Forward propagates the supplied image file.

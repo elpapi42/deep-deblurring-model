@@ -15,6 +15,7 @@ inputs = tf.constant(
     ]
 )
 
-outputs = wrap(inputs)
+with tf.device('/cpu:0'):
+    outputs = wrap(inputs)
 
 print(outputs[0])
