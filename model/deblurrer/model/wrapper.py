@@ -52,3 +52,10 @@ class ImageByteWrapper(Model):
             outputs_list.append(output)
 
         return outputs_list
+
+    def string_wrapped(self):
+        """Wrape the model under string inputs/outputs types."""
+        inputs = tf.keras.layers.Inputs(dtype=tf.string)
+        outputs = self(inputs)
+
+        return tf.keras.Model(inputs=inputs, outputs=outputs)
