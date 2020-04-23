@@ -6,3 +6,4 @@
 from deblurrer.model.generator import FPNGenerator
 from deblurrer.model.discriminator import DoubleScaleDiscriminator
 from deblurrer.model.deblurgan import DeblurGAN
+from deblurrer.model.wrapper import ImageByteWrapper

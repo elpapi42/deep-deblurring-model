@@ -100,7 +100,7 @@ def run(
         model.summary()
 
         # Train GAN freezing the generator backbone
-        if (warm_epochs > 0):
+        if (int(warm_epochs) > 0):
             print('Starting model warm up...')
 
             model.generator.fpn.backbone.backbone.trainable = False
