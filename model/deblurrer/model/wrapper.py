@@ -46,6 +46,7 @@ class ImageByteWrapper(Model):
             output = (output * 128.0) + 127.0
             output = tf.cast(output, dtype=tf.uint8)
             output = tf.io.encode_jpeg(output)
+            output = tf.io.encode_base64(output, pad=True)
             return output
 
         outputs = tf.map_fn(post_output, outputs, dtype=tf.string)
