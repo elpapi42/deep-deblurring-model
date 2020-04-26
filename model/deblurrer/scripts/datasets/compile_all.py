@@ -29,13 +29,13 @@ def run(data, credentials):
     creds = pathlib.Path(credentials)
 
     # Starts the downloads
+    kaggle_blur.run(data)
     download_gdrive.run(
         gdrive_id='1KStHiZn5TNm2mo3OLZLjnRvd0vVFCI0W',
         dataset_name='gopro',
         credentials_path=creds,
         download_path=data,
     )
-    kaggle_blur.run(data)
 
     # Generate csv
     generate_csv.run(data)
