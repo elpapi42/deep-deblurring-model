@@ -7,6 +7,7 @@ import io
 import pickle
 import os
 import pathlib
+import zipfile
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
