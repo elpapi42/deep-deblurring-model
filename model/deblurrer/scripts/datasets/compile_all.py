@@ -30,7 +30,7 @@ def run(path):
     # Starts the downloads
     kaggle_blur.run(data)
     download_gdrive.run(
-        gdrive_id='1-tLJSsdRVbi1OJLfF77ZrzrLdD-sYOCp',
+        gdrive_id='1KStHiZn5TNm2mo3OLZLjnRvd0vVFCI0W',
         dataset_name='gopro',
         credentials_path=creds,
         download_path=data,
