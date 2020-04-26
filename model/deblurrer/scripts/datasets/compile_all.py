@@ -46,7 +46,7 @@ def run(data, credentials):
 
 if (__name__ == '__main__'):
     # Get the path to the datasets folder
-    folder_path = os.path.dirname(
+    path = os.path.dirname(
         os.path.dirname(
             os.path.dirname(
                 os.path.dirname(
@@ -59,4 +59,4 @@ if (__name__ == '__main__'):
     data = os.path.join(path, 'datasets')
     creds = os.path.join(path, 'credentials')
 
-    run(folder_path)
+    run(data, creds)
