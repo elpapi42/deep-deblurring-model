@@ -13,19 +13,20 @@ from deblurrer.scripts.datasets import generate_csv, generate_tfrecord
 from deblurrer.scripts.datasets import kaggle_blur, download_gdrive
 
 
-def run(path):
+def run(data, credentials):
     """
     Run all the datasets download scripts.
 
     Generates .csv and .tfrecords
 
     Args:
-        path (str): Path conting datasets and credentials folders.
+        data (str): Path conting datasets folders.
+        credentials (str): Path for credentials folder
 
     """
     # Datasets and  credentials folders
-    data = pathlib.Path(path)/'datasets'
-    creds = pathlib.Path(path)/'credentials'
+    data = pathlib.Path(data)
+    creds = pathlib.Path(credentials)
 
     # Starts the downloads
     kaggle_blur.run(data)
@@ -54,5 +55,8 @@ if (__name__ == '__main__'):
             ),
         ),
     )
+
+    data = os.path.join(path, 'datasets')
+    creds = os.path.join(path, 'credentials')
 
     run(folder_path)
