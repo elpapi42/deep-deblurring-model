@@ -76,6 +76,28 @@ def download(gdrive_id, file, credentials_path, block_size=500):
         bar.refresh()
 
 
+def extract(file_path, extract_path):
+    """
+    Extract if exists.
+
+    Args:
+        file_path (str): Path of the file to be extracted
+        extract_path (str): Path to copy the extracted files
+
+    Returns:
+        True if extracted successfully, False otherwise
+
+    """
+    if (os.path.exists(file_path) and os.path.isfile(file_path)):
+        with zipfile.ZipFile(file_path, 'r') as compressed:
+            compressed.extractall(extract_path)
+            compressed.close()
+
+            return True
+
+    return False
+
+
 def run(gdrive_id, dataset_name, credentials_path, download_path):
     """
     Downloads dataset from gdrive.
@@ -90,7 +112,7 @@ def run(gdrive_id, dataset_name, credentials_path, download_path):
     print('Downloading {name}'.format(name=dataset_name))
 
     download_path = pathlib.Path(download_path)
-    file_name = download_path/dataset_name/'{name}.rar'.format(name=dataset_name)
+    file_name = download_path/dataset_name/'{name}.zip'.format(name=dataset_name)
 
     if (not file_name.exists()):
         os.mkdir(download_path/dataset_name)
@@ -100,6 +122,10 @@ def run(gdrive_id, dataset_name, credentials_path, download_path):
             file=file_name,
             credentials_path=credentials_path,
         )
+
+    extract(file_name, download_path)
+
+    
 
 if (__name__ == '__main__'):
     path = os.path.dirname(
