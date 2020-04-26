@@ -15,7 +15,7 @@ from google.auth.transport.requests import Request
 
 from tqdm import tqdm
 
-def download(gdrive_id, file, credentials_path, block_size=100):
+def download(gdrive_id, file, credentials_path, block_size=500):
     """
     Download the file from gdrive and writes it to file
 
@@ -95,7 +95,6 @@ def run(gdrive_id, dataset_name, credentials_path, download_path):
             gdrive_id=gdrive_id,
             file=file_name,
             credentials_path=credentials_path,
-            block_size=1
         )
 
 if (__name__ == '__main__'):
