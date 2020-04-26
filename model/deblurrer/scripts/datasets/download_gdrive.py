@@ -7,8 +7,7 @@ import io
 import pickle
 import os
 import pathlib
-
-from pyunpack import Archive
+import rarfile
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -91,8 +90,11 @@ def extract(file_path, extract_path):
 
     """
     if (os.path.exists(file_path) and os.path.isfile(file_path)):
-        Archive(file_path).extractall(extract_path)
-        return True
+        with rarfile.RarFile(file_path, 'r') as compressed:
+            compressed.extractall(extract_path)
+            compressed.close()
+
+            return True
 
     return False
 
