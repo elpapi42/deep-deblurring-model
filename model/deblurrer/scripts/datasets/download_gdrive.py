@@ -7,7 +7,8 @@ import io
 import pickle
 import os
 import pathlib
-import zipfile
+
+from pyunpack import Archive
 
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -90,11 +91,8 @@ def extract(file_path, extract_path):
 
     """
     if (os.path.exists(file_path) and os.path.isfile(file_path)):
-        with zipfile.ZipFile(file_path, 'r') as compressed:
-            compressed.extractall(extract_path)
-            compressed.close()
-
-            return True
+        Archive(file_path).extractall(extract_path)
+        return True
 
     return False
 
@@ -113,7 +111,7 @@ def run(gdrive_id, dataset_name, credentials_path, download_path):
     print('Downloading {name}'.format(name=dataset_name))
 
     download_path = pathlib.Path(download_path)
-    file_name = download_path/dataset_name/'{name}.zip'.format(name=dataset_name)
+    file_name = download_path/dataset_name/'{name}.rar'.format(name=dataset_name)
 
     if (not file_name.exists()):
         os.mkdir(download_path/dataset_name)
