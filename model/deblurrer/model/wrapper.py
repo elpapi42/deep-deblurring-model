@@ -34,7 +34,8 @@ class ImageByteWrapper(Model):
         """
         def pre_input(image):
             image = tf.squeeze(image, axis=[0],)
-            image = tf.io.decode_image(image, dtype=tf.float32)
+            image = tf.io.decode_image(image)
+            image = tf.cast(image, dtype=tf.float32)
             image = (image - 127.0) / 128.0
             return image
 
