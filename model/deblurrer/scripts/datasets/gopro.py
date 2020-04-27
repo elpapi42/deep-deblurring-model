@@ -13,35 +13,38 @@ The module must define the data extraction logic.
 """
 
 import os
-import zipfile
-import requests
+import pathlib
+
+from deblurrer.scripts.datasets.download_gdrive import run as gdrive_download
 
 
-from deblurrer.scripts.datasets.download_gdrive import download
-
-
-def extract(file_path, extract_path):
+def refactor_folder(path):
     """
-    Extract if exists.
+    Refactor dataset folder for be structered as sharp/blurred images.
 
     Args:
-        file_path (str): Path of the file to be extracted
-        extract_path (str): Path to copy the extracted files
-
-    Returns:
-        True if extracted successfully, False otherwise
+        path (str): The path where the function will operate
 
     """
-    if (os.path.exists(file_path) and os.path.isfile(file_path)):
-        with zipfile.ZipFile(file_path, 'r') as compressed:
-            compressed.extractall(extract_path)
-            compressed.close()
-
-            return True
-
-    return False
+    pass
 
 
+def run(credentials_path, download_path):
+    """
+    Downloads gopro dataset from gdrive.
+
+    Args:
+        credentials_path (str): path from where to retrieve/save the gdriv credentials
+        download_path (str): Where to create the download folder for this dataset
+    """
+    download_gdrive.run(
+        gdrive_id='1KStHiZn5TNm2mo3OLZLjnRvd0vVFCI0W',
+        dataset_name='gopro',
+        credentials_path=credentials_path,
+        download_path=download_path,
+    )
+
+    refactor_folder(download_path/dataset_name)
 
 
 if (__name__ == '__main__'):

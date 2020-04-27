@@ -124,8 +124,7 @@ def run(gdrive_id, dataset_name, credentials_path, download_path):
             credentials_path=credentials_path,
         )
 
-    extract(file_name, download_path)
-
+    extract(file_name, download_path/dataset_name)
     
 
 if (__name__ == '__main__'):

@@ -10,7 +10,7 @@ import os
 import pathlib
 
 from deblurrer.scripts.datasets import generate_csv, generate_tfrecord
-from deblurrer.scripts.datasets import kaggle_blur, download_gdrive
+from deblurrer.scripts.datasets import kaggle_blur, gopro
 
 
 def run(data, credentials):
@@ -30,9 +30,7 @@ def run(data, credentials):
 
     # Starts the downloads
     kaggle_blur.run(data)
-    download_gdrive.run(
-        gdrive_id='1KStHiZn5TNm2mo3OLZLjnRvd0vVFCI0W',
-        dataset_name='gopro',
+    gopro.run(
         credentials_path=creds,
         download_path=data,
     )
