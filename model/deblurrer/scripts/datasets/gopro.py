@@ -44,7 +44,7 @@ def run(credentials_path, download_path):
         download_path=download_path,
     )
 
-    refactor_folder(download_path/dataset_name)
+    refactor_folder(download_path/'gopro')
 
 
 if (__name__ == '__main__'):
