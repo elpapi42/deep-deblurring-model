@@ -37,7 +37,7 @@ def run(credentials_path, download_path):
         credentials_path (str): path from where to retrieve/save the gdriv credentials
         download_path (str): Where to create the download folder for this dataset
     """
-    download_gdrive.run(
+    gdrive_download.run(
         gdrive_id='1KStHiZn5TNm2mo3OLZLjnRvd0vVFCI0W',
         dataset_name='gopro',
         credentials_path=credentials_path,
