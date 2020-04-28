@@ -14,6 +14,7 @@ The module must define the data extraction logic.
 
 import os
 import pathlib
+import shutil
 
 from deblurrer.scripts.datasets.download_gdrive import run as gdrive_download
 
@@ -26,7 +27,28 @@ def refactor_folder(path):
         path (str): The path where the function will operate
 
     """
-    pass
+    blur_path = path/'blur'
+    sharp_path = path/'sharp'
+    ops_path = path/'GOPRO'/'GOPRO_3840FPS_AVG_3-21'
+
+    # Create folders
+    blur_path.mkdir(parents=True, exist_ok=True)
+    sharp_path.mkdir(parents=True, exist_ok=True)
+
+    # Scan and copy imagesfrom the folders to the sharp/blur folders
+    for data_slice in [ops_path/'train', ops_path/'test']:
+        data_blur = data_slice/'blur'
+        data_sharp = data_slice/'sharp'
+
+        for dir_path, dest_path in [[data_blur, blur_path], [data_sharp, sharp_path]]:
+            for img_stack in dir_path.iterdir():
+                for image in img_stack.iterdir():
+                    
+                    dest = dest_path/'{folder}_{file}'.format(
+                        folder=image.parent.stem,
+                        file='{name}.png'.format(name=image.stem),
+                    )
+                    shutil.copy(image, dest)
 
 
 def run(credentials_path, download_path):
