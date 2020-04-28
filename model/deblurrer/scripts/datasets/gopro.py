@@ -41,7 +41,7 @@ def refactor_folder(path):
         data_sharp = data_slice/'sharp'
 
         for dir_path, dest_path in [[data_blur, blur_path], [data_sharp, sharp_path]]:
-            for img_stack in dir_path.iterdir():
+            for img_stack in [dir for dir in dir_path.iterdir() if dir.is_dir()]:
                 for image in img_stack.iterdir():
                     
                     dest = dest_path/'{folder}_{file}'.format(
