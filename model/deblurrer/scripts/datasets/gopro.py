@@ -47,7 +47,7 @@ def refactor_folder(path):
                         folder=image.parent.stem,
                         file='{name}.png'.format(name=image.stem),
                     )
-                    shutil.copy(image, dest)
+                    image.rename(dest)
 
 
 def run(credentials_path, download_path):
