@@ -42,7 +42,7 @@ def refactor_folder(path):
 
         for dir_path, dest_path in [[data_blur, blur_path], [data_sharp, sharp_path]]:
             for img_stack in [dir for dir in dir_path.iterdir() if dir.is_dir()]:
-                for image in [img for img in img_stack.iterdir() if img.suffix is '.png']:
+                for image in [img for img in img_stack.iterdir() if img.suffix == '.png']:
                     dest = dest_path/'{folder}_{file}'.format(
                         folder=image.parent.stem,
                         file='{name}.png'.format(name=image.stem),
