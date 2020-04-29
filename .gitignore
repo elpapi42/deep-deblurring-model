@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 .vscode/
-/model/datasets/
-/model/output/
-/model/credentials/
+datasets/
+output/
+credentials/
