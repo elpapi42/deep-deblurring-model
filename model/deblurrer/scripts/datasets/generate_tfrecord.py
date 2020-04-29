@@ -133,7 +133,7 @@ def run(path):
         os.mkdir(tfrecs_path)
 
         # Csv files and its desired split count
-        csv_files = [['train.csv', 4], ['valid.csv', 1], ['test.csv', 1]]
+        csv_files = [['train.csv', 8], ['valid.csv', 1], ['test.csv', 1]]
 
         for csv_name, splits in csv_files:
             # Logs
