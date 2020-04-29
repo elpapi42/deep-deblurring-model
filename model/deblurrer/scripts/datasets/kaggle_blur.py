@@ -14,6 +14,7 @@ The module must define the data extraction logic.
 
 import os
 import shutil
+import pathlib
 
 from kaggle import api
 import pandas as pd
@@ -87,19 +88,18 @@ def run(path):
     """
     # Logs
     print('Downloading kaggle_blur')
-    
-    path = os.path.join(
-        path,
-        'kaggle_blur',
-    )
 
-    api.dataset_download_cli(
-        'kwentar/blur-dataset',
-        path=path,
-        unzip=True,
-    )
+    download_path = pathlib.Path(path)/'kaggle_blur'
+    file_name = download_path/'blur-dataset.zip'
 
-    refactor_folder(path)
+    if (not file_name.exists()):
+        api.dataset_download_cli(
+            'kwentar/blur-dataset',
+            path=download_path,
+            unzip=True,
+        )
+
+        refactor_folder(download_path)
 
 
 if (__name__ == '__main__'):

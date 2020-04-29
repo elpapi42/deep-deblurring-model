@@ -20,6 +20,7 @@ img01.jpg is present in blur and sharp folders
 """
 
 import os
+import pathlib
 
 import pandas as pd
 
@@ -32,63 +33,42 @@ def run(path):
         path (str): Path containg datasets folders. csv will be stored here too
 
     """
-    # Storage paths
-    csv_path = os.path.join(path, 'csv')
-    train_path = os.path.join(csv_path, 'train.csv')
-    valid_path = os.path.join(csv_path, 'valid.csv')
-    test_path = os.path.join(csv_path, 'test.csv')
+    path = pathlib.Path(path)
+    csv_path = path/'csv'
 
-    # Only executes if the csv folder is not there
-    if (not (os.path.exists(csv_path) and os.path.isdir(csv_path))):
-        # Logs
-        print('Generating .csv files')
+    if (not (csv_path.exists() and csv_path.is_dir())):
+        # Creates csv folder
+        csv_path.mkdir(parents=True, exist_ok=True)
 
-        # Make csv folder
-        os.mkdir(csv_path)
+        dataset = pd.DataFrame(columns=['sharp', 'blur'])
 
-        # list possible datasets subfolders
-        ds_folders = os.listdir(path)
+        for dset in path.iterdir():
+            sharp_path = dset/'sharp'
+            blur_path = dset/'blur'
 
-        # Ensures there is no tfrecords folder in the list
-        if (ds_folders.count('tfrecords') > 0):
-            ds_folders.pop(ds_folders.index('tfrecords'))
-
-        dataset = pd.DataFrame()
-
-        for dset in ds_folders:
-            dset_path = os.path.join(path, dset)
-
-            sharp_path = os.path.join(dset_path, 'sharp')
-            blur_path = os.path.join(dset_path, 'blur')
-
-            if (os.path.isdir(sharp_path) and os.path.isdir(blur_path)):
-                # Get names of kaggle blur images
-                sharp_list = os.listdir(sharp_path)
-                blur_list = os.listdir(blur_path)
-
+            if (sharp_path.exists() and blur_path.exists()):
                 # Builds dataframe with kaggle blur image pairs paths
                 dataframe = pd.DataFrame()
-                dataframe['sharp'] = sharp_list
-                dataframe['sharp'] = os.path.join(sharp_path, '') + dataframe['sharp']
-                dataframe['blur'] = blur_list
-                dataframe['blur'] = os.path.join(blur_path, '') + dataframe['blur']
-
+                dataframe['sharp'] = [img for img in sharp_path.iterdir()]
+                dataframe['blur'] = [img for img in blur_path.iterdir()]
+                """
                 # loads, updates and writes the new gen dataframe to the csv
                 if (dataset.empty):
-                    dataset = dataframe
+                    dataset = dataframe.copy()
                 else:
-                    dataset.append(dataframe)
+                """
+                dataset = dataset.append(dataframe, ignore_index=True)
 
-            # Split dataset
-            train = dataset.sample(frac=0.75, random_state=124)
-            dataset = dataset.drop(train.index)
-            valid = dataset.sample(frac=0.5, random_state=124)
-            test = dataset.drop(valid.index)
+        # Split dataset
+        train = dataset.sample(frac=0.8, random_state=124)
+        dataset = dataset.drop(train.index)
+        valid = dataset.sample(frac=0.5, random_state=124)
+        test = dataset.drop(valid.index)
 
-            # Writes to storage
-            train.to_csv(train_path, index=None)
-            valid.to_csv(valid_path, index=None)
-            test.to_csv(test_path, index=None)
+        # Writes to storage
+        train.to_csv(csv_path/'train.csv', index=None)
+        valid.to_csv(csv_path/'valid.csv', index=None)
+        test.to_csv(csv_path/'test.csv', index=None)
         
         # Logs
         print('.csv files successfully generated')

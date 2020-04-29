@@ -131,3 +131,4 @@ dmypy.json
 .vscode/
 /model/datasets/
 /model/output/
+/model/credentials/
