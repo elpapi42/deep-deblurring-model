@@ -73,23 +73,11 @@ class DeblurGAN(Model):
         # Unstack the two images batches
         sharp, blur = tf.unstack(images, axis=1)
 
-        with tf.GradientTape() as generator_tape:
-            # Generate a batch of sinthetized images
-            # This will be used by other param updates
-            generated = self.generator(blur)
-            gen_preds = self.discriminator([sharp, generated])
-            gen_loss = generator_loss(
-                generated,
-                sharp,
-                gen_preds,
-                self.loss_network,
-            )
-        self._minimize(
-            self.distribute_strategy,
-            generator_tape,
-            self.optimizer[0],
-            gen_loss,
-            self.generator.trainable_variables,
+        # Update generator parameters and return metrics
+        gen_metrics, generated = self.generator_train_step(
+            sharp,
+            blur,
+            return_generated_images=True,
         )
 
         # Discriminator train step for generated images
@@ -121,8 +109,9 @@ class DeblurGAN(Model):
         )
 
         return {
-            'gen_loss': gen_loss,
-            'disc_loss': (sharp_loss + generated_loss) / 2.0
+            'gen_loss': gen_metrics['loss'],
+            'disc_sharp_loss': sharp_loss,
+            'disc_generated_loss': generated_loss,
         }
 
     def test_step(self, images):
@@ -135,40 +124,87 @@ class DeblurGAN(Model):
         Returns:
             Dict of Metrics of the GAN
         """
+        # Unstack the two images batches
+        sharp, blur = tf.unstack(images, axis=1)
+
+        # Calculate Generator metrics
+        gen_metrics = self.generator_metrics_over_batch(sharp, blur)
+
         return {
-            'gen_loss': 0.0,
-            'disc_loss': 0.0,
+            'gen_loss': gen_metrics['loss'],
+            'disc_sharp_loss': 0.0,
+            'disc_generated_loss': 0.0,
         }
 
-    def get_metrics_over_batch(self, images):
+    def generator_metrics_over_batch(self, sharp, blur, return_generated_images=False):
         """
-        Compute metrics of the GAN over a batch of images.
+        Compute metrics of the generator over a batch of images.
 
         Args:
-            images (tensor): shape [batch, 2, h. w, chnls]
+            sharp (tensor): shape [batch, h, w, chnls]
+            blur (tensor): shape [batch, h, w, chnls]
+            return_generated_images (bool): Self explanatory
 
         Returns:
-            Dict of Metrics of the GAN
+            Dict of Metrics of the generator 
+            or list len=2 with [metrics, generated_images]
         """
-        # Forward propagates the supplied batch of images.
-        real_output, fake_output, gen_images = self(images)
+        # Generate a batch of sinthetized images
+        generated = self.generator(blur)
 
-        sharp, _ = tf.unstack(images, axis=1)
+        # Forward pass generated images over discriminator
+        preds = self.discriminator([sharp, generated])
 
-        # Calculate losses
-        gen_loss = generator_loss(
-            gen_images,
+        # Calculate loss
+        loss = generator_loss(
+            generated,
             sharp,
-            fake_output,
+            preds,
             self.loss_network,
         )
 
-        disc_loss = discriminator_loss(real_output, fake_output)
-
-        return {
-            'gen_loss': gen_loss,
-            'disc_loss': disc_loss,
+        # Register metrics on dictionary
+        metrics = {
+            'loss': loss,
         }
+
+        if (return_generated_images):
+            return [metrics, generated]
+        else:
+            return metrics
+        
+    def generator_train_step(self, sharp, blur, return_generated_images=False):
+        """
+        Update generator params over a batch of images.
+
+        Args:
+            sharp (tensor): shape [batch, h, w, chnls]
+            blur (tensor): shape [batch, h, w, chnls]
+            return_generated_images (bool): Self explanatory
+
+        Returns:
+            Dict of Metrics of the generator 
+            or list len=2 with [metrics, generated_images]
+        """
+        # Record operations including metric calculations
+        with tf.GradientTape() as tape:
+            output = self.generator_metrics_over_batch(
+                sharp,
+                blur,
+                return_generated_images,
+            )
+        
+        # Update **Generator** parameters
+        self._minimize(
+            self.distribute_strategy,
+            tape,
+            self.optimizer[0],
+            output[0]['loss'] if return_generated_images else output['loss'],
+            self.generator.trainable_variables,
+        )
+
+        return output
+        
 
     def get_loss_network(self):
         """
