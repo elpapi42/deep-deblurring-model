@@ -70,28 +70,60 @@ class DeblurGAN(Model):
         Returns:
             Dict of Metrics of the GAN
         """
-        with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            metrics = self.get_metrics_over_batch(images)
+        # Unstack the two images batches
+        sharp, blur = tf.unstack(images, axis=1)
 
-        # Update generator params
+        with tf.GradientTape() as generator_tape:
+            # Generate a batch of sinthetized images
+            # This will be used by other param updates
+            generated = self.generator(blur)
+            gen_preds = self.discriminator([sharp, generated])
+            gen_loss = generator_loss(
+                generated,
+                sharp,
+                gen_preds,
+                self.loss_network,
+            )
         self._minimize(
             self.distribute_strategy,
-            gen_tape,
+            generator_tape,
             self.optimizer[0],
-            metrics['gen_loss'],
+            gen_loss,
             self.generator.trainable_variables,
         )
 
-        # Update discriminator params
+        # Discriminator train step for generated images
+        with tf.GradientTape() as generated_tape:
+            generated_preds = self.discriminator([sharp, generated])
+            generated_loss = discriminator_loss(generated_preds, real_preds=False)
+
+        # Update discriminator params for generated images
         self._minimize(
             self.distribute_strategy,
-            disc_tape,
+            generated_tape,
             self.optimizer[1],
-            metrics['disc_loss'],
+            generated_loss,
             self.discriminator.trainable_variables,
         )
 
-        return metrics
+        # Discriminator train step for sharp images
+        with tf.GradientTape() as sharp_tape:
+            sharp_preds = self.discriminator([sharp, sharp])
+            sharp_loss = discriminator_loss(sharp_preds, real_preds=True)
+
+        # Update discriminator params for sharp images
+        self._minimize(
+            self.distribute_strategy,
+            sharp_tape,
+            self.optimizer[1],
+            sharp_loss,
+            self.discriminator.trainable_variables,
+        )
+
+        return {
+            'gen_loss': gen_loss,
+            'disc_loss': (sharp_loss + generated_loss) / 2.0
+        }
 
     def test_step(self, images):
         """
@@ -103,7 +135,10 @@ class DeblurGAN(Model):
         Returns:
             Dict of Metrics of the GAN
         """
-        return self.get_metrics_over_batch(images)
+        return {
+            'gen_loss': 0.0,
+            'disc_loss': 0.0,
+        }
 
     def get_metrics_over_batch(self, images):
         """
