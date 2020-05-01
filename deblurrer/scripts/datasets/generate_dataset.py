@@ -66,24 +66,23 @@ def transform(example):
     """
     # Swaps batch dimension to be second, this make calcs easier in the future
     sharp, blur = tf.unstack(example, axis=1)
+    images = tf.concat([sharp, blur], axis=0)
 
-    # Generates a random resolution multiplier of 256
-    rnd_size = tf.multiply(
-        tf.random.uniform(
-            shape=[],
-            minval=1,
-            maxval=int(os.environ.get('IMAGE_SIZE_MULTIPLIER')) + 1,
-            dtype=tf.int32,
-        ),
-        int(os.environ.get('IMAGE_SIZE')),
+    # Generates a random crop size
+    crop_size = int(os.environ.get('IMAGE_SIZE'))
+    batch_size = tf.shape(images)[0]
+
+    # Cropping
+    images = tf.image.random_crop(
+        images,
+        size=[batch_size, crop_size, crop_size, 3],
     )
 
-    # Resize images to a random res between 256 and 1440
-    sharp = tf.image.resize(sharp, [rnd_size, rnd_size])
-    blur = tf.image.resize(blur, [rnd_size, rnd_size])
+    images = tf.cast(images, dtype=tf.float32)
+    images = (images - 127.0) / 128.0
 
+    sharp, blur = tf.split(images, num_or_size_splits=2)
     example = tf.stack([sharp, blur], axis=1)
-    example = (example - 127.0) / 128.0
 
     return example
 

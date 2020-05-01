@@ -39,7 +39,8 @@ def generate_tfrecord_from_dataframe(path, df):
             with open(columns['sharp'], 'rb') as sharp_file:
                 sharp = sharp_file.read()
                 sharp = tf.io.decode_image(sharp, channels=3)
-                sharp = tf.image.resize_with_pad(sharp, 1024, 1024)
+                sharp = crop_center(sharp)
+                sharp = tf.image.resize(sharp, size=[512, 512], preserve_aspect_ratio=True)
                 sharp = tf.cast(sharp, tf.uint8)
                 sharp = tf.io.encode_jpeg(sharp, optimize_size=True)
 
@@ -47,7 +48,8 @@ def generate_tfrecord_from_dataframe(path, df):
             with open(columns['blur'], 'rb') as blur_file:
                 blur = blur_file.read()
                 blur = tf.io.decode_image(blur, channels=3)
-                blur = tf.image.resize_with_pad(blur, 1024, 1024)
+                blur = crop_center(blur)
+                blur = tf.image.resize(blur, size=[512, 512], preserve_aspect_ratio=True)
                 blur = tf.cast(blur, tf.uint8)
                 blur = tf.io.encode_jpeg(blur, optimize_size=True)
 
@@ -111,6 +113,15 @@ def generate_tfrecord_from_csv(path, csv, splits=1):
         # If the file does not exist, create it.
         if (not (os.path.exists(store_path) and os.path.isfile(store_path))):
             generate_tfrecord_from_dataframe(store_path, split)
+
+
+def crop_center(image):
+    h, w = tf.shape(image)[-3], tf.shape(image)[-2]
+    if h > w:
+        cropped_image = tf.image.crop_to_bounding_box(image, (h - w) // 2, 0, w, w)
+    else:
+        cropped_image = tf.image.crop_to_bounding_box(image, 0, (w - h) // 2, h, h)
+    return cropped_image
 
 
 def run(path):

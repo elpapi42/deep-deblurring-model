@@ -6,7 +6,7 @@
 import tensorflow as tf
 
 
-def ragan_ls_loss(pred, real_preds):
+def ragan_ls_loss(preds, real_preds):
     """
     Compute the RaGAN-LS loss of supplied prediction.
 
@@ -14,38 +14,44 @@ def ragan_ls_loss(pred, real_preds):
     Author call it RaGAN-LS loss
 
     Args:
-        pred (tf.Tensor): discriminator over real or generated batch of images
+        preds (tf.Tensor): discriminator over real or generated batch of images
         real_preds (bool): if supplied preds comes from real images
 
     Returns:
         Loss of predictions compared to expectation
     """
-    real_preds = tf.constant(real_preds, dtype=pred.dtype)
+    real_preds = tf.constant(real_preds, dtype=preds.dtype)
 
-    first_side = tf.multiply(real_preds, tf.square(pred - 1))
-    second_side = tf.multiply(1 - real_preds, tf.square(pred + 1))
+    # This factor allows soft/smooth labels
+    # We use one sided soft labels due the ragan loss design
+    soft_factor = tf.ones_like(preds)
+    soft_factor += 0.1 * tf.random.uniform(
+        shape=tf.shape(preds),
+        minval=-1.0,
+        maxval=1.0,
+    )
+
+    first_side = tf.multiply(real_preds * soft_factor, tf.square(preds - 1))
+    second_side = tf.multiply((1 - real_preds) * soft_factor, tf.square(preds + 1))
 
     return tf.reduce_mean(first_side + second_side)
 
 
-def discriminator_loss(real_pred, fake_pred):
+def discriminator_loss(preds, real_preds):
     """
     Compute the **TOTAL** RaGAN-LS loss of DScaleDiscrim.
 
     Args:
-        real_pred (dict): discriminator output over real images
-        fake_pred (dict): discrim output over generated images
+        preds (dict): discriminator output over real images
+        real_preds (bool): if supplied preds comes from real images
 
     Returns:
         Total loss over real and fake images
     """
-    real_loss_l = ragan_ls_loss(real_pred['local'], real_preds=True)
-    real_loss_g = ragan_ls_loss(real_pred['global'], real_preds=True)
+    loss_l = ragan_ls_loss(preds['local'], real_preds)
+    loss_g = ragan_ls_loss(preds['global'], real_preds)
 
-    fake_loss_l = ragan_ls_loss(fake_pred['local'], real_preds=False)
-    fake_loss_g = ragan_ls_loss(fake_pred['global'], real_preds=False)
-
-    return real_loss_l + real_loss_g + fake_loss_l + fake_loss_g
+    return loss_l + loss_g
 
 
 def generator_loss(gen_images, sharp_images, fake_pred, loss_network):
@@ -74,9 +80,7 @@ def generator_loss(gen_images, sharp_images, fake_pred, loss_network):
 
     lx = feature_reconstruction_loss(gen_images, sharp_images, loss_network)
 
-    ladv_local = ragan_ls_loss(fake_pred['local'], real_preds=True)
-    ladv_global = ragan_ls_loss(fake_pred['global'], real_preds=True)
-    ladv = ladv_local + ladv_global
+    ladv = discriminator_loss(fake_pred, real_preds=True)
 
     return 0.5 * lp + 0.006 * lx + 0.01 * ladv
 
