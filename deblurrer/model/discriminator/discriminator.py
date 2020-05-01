@@ -50,7 +50,7 @@ class DoubleScaleDiscriminator(Model):
             Dict with local/global keys w/ tensors shape [batch, 1]
         """
         # Concat inputs in channels-wise
-        inputs = tf.concat([inputs[0], inputs[1]], axis=-1)
+        inputs = tf.concat([inputs[1], inputs[0]], axis=-1)
 
         local = self.local(inputs)
         dglobal = self.dglobal(inputs)
