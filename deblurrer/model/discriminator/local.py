@@ -11,6 +11,7 @@ each prob maps to a 70x70 patch of the input image
 
 import tensorflow as tf
 from tensorflow.keras import layers, Model
+from tensorflow.keras.initializers import RandomNormal
 
 from deblurrer.model.generator import ConvBlock
 
@@ -39,8 +40,13 @@ class LocalDiscriminator(Model):
         self.conv_b = LeakyConvBlock(128, kernel_size, strides, alpha)
         self.conv_c = LeakyConvBlock(256, kernel_size, strides, alpha)
         self.conv_d = LeakyConvBlock(512, kernel_size, strides, alpha)
-        self.conv_e = LeakyConvBlock(512, kernel_size, 1, alpha)
-        self.conv_f = layers.Conv2D(1, kernel_size, 1, padding='same')
+        self.conv_e = LeakyConvBlock(512, kernel_size, alpha=alpha)
+        self.conv_f = layers.Conv2D(
+            filters=1,
+            kernel_size=kernel_size,
+            padding='same',
+            kernel_initializer=RandomNormal(stddev=0.2),
+        )
 
         self.activation = layers.Activation('sigmoid')
 
@@ -79,8 +85,8 @@ class LeakyConvBlock(ConvBlock):
         self,
         filters,
         kernel_size,
-        strides,
-        alpha,
+        strides=1,
+        alpha=0.2,
         override_activation=False,
     ):
         """
@@ -100,5 +106,6 @@ class LeakyConvBlock(ConvBlock):
             kernel_size,
             strides,
             padding='same',
+            kernel_initializer=RandomNormal(stddev=0.2),
         )
         self.relu = layers.LeakyReLU(alpha=alpha)

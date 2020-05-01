@@ -259,6 +259,7 @@ class DeblurGAN(Model):
         return tf.keras.Model(
             inputs=vgg19.inputs,
             outputs=vgg19.get_layer(name='block3_conv3').output,
+            name='loss_network',
         )
 
     def _minimize(self, strategy, tape, optimizer, loss, trainable_variables):
