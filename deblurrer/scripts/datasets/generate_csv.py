@@ -51,18 +51,13 @@ def run(path):
                 dataframe = pd.DataFrame()
                 dataframe['sharp'] = [img for img in sharp_path.iterdir()]
                 dataframe['blur'] = [img for img in blur_path.iterdir()]
-                """
-                # loads, updates and writes the new gen dataframe to the csv
-                if (dataset.empty):
-                    dataset = dataframe.copy()
-                else:
-                """
+
                 dataset = dataset.append(dataframe, ignore_index=True)
 
         # Split dataset
-        train = dataset.sample(frac=0.8, random_state=124)
+        train = dataset.sample(frac=0.8)
         dataset = dataset.drop(train.index)
-        valid = dataset.sample(frac=0.5, random_state=124)
+        valid = dataset.sample(frac=0.5)
         test = dataset.drop(valid.index)
 
         # Writes to storage

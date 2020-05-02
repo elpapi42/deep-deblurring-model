@@ -22,4 +22,4 @@ def discriminator_accuracy(preds, real_preds):
     local_acc = tf.keras.metrics.binary_accuracy(labels, preds['local'])
     global_acc = tf.keras.metrics.binary_accuracy(labels, preds['global'])
 
-    return (local_acc + global_acc) / 2.0
+    return (tf.reduce_mean(local_acc) + tf.reduce_mean(global_acc)) / 2.0
