@@ -51,7 +51,7 @@ def discriminator_loss(preds, real_preds):
     loss_l = ragan_ls_loss(preds['local'], real_preds)
     loss_g = ragan_ls_loss(preds['global'], real_preds)
 
-    return loss_l + loss_g
+    return (loss_l + loss_g) / 2.0
 
 
 def generator_loss(gen_images, sharp_images, fake_pred, loss_network):
