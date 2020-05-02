@@ -16,6 +16,7 @@ from tensorflow.python.distribute import parameter_server_strategy
 
 from deblurrer.model import FPNGenerator, DoubleScaleDiscriminator
 from deblurrer.model.losses import discriminator_loss, generator_loss
+from deblurrer.model.metrics import discriminator_accuracy
 
 
 class DeblurGAN(Model):
@@ -97,6 +98,8 @@ class DeblurGAN(Model):
             'gen_loss': generator_metrics['loss'],
             'disc_sharp_loss': sharp_metrics['loss'],
             'disc_generated_loss': generated_metrics['loss'],
+            'disc_sharp_acc': sharp_metrics['acc'],
+            'disc_generated_acc': generated_metrics['acc'],
         }
 
     def test_step(self, images):
@@ -121,6 +124,8 @@ class DeblurGAN(Model):
             'gen_loss': generator_metrics['loss'],
             'disc_sharp_loss': sharp_metrics['loss'],
             'disc_generated_loss': generated_metrics['loss'],
+            'disc_sharp_acc': sharp_metrics['acc'],
+            'disc_generated_acc': generated_metrics['acc'],
         }
 
     def generator_metrics_over_batch(self, sharp, blur, return_generated_images=True):
@@ -209,9 +214,11 @@ class DeblurGAN(Model):
 
         # Calculate metrics
         loss = discriminator_loss(preds, real_preds)
+        acc = discriminator_accuracy(preds, real_preds)
 
         return {
             'loss': loss,
+            'acc': acc,
         }
 
     def discriminator_train_step(self, sharp, image, real_preds):
