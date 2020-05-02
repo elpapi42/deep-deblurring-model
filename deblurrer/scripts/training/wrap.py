@@ -2,6 +2,8 @@ import tensorflow as tf
 import os
 from dotenv import load_dotenv
 
+from tensorflow.keras.applications.mobilenet import preprocess_input
+
 from deblurrer.scripts.datasets.generate_dataset import get_dataset
 
 # Load .env vars
@@ -13,27 +15,12 @@ dataset = get_dataset(
     batch_size=1,
 )
 
-for image in dataset.skip(11).take(1):
-    sharp = (image[0][0] * 128.0) + 127.0
-    sharp = tf.cast(sharp, dtype=tf.uint8)
-    sharp = tf.io.encode_jpeg(sharp)
-    tf.io.write_file('sharp.jpg', sharp)
+inputs = tf.random.uniform([1, 32, 32, 3], 0, 255, dtype=tf.int32)
+inputs = tf.cast(inputs, dtype=tf.float32)
 
-    blur = (image[0][1] * 128.0) + 127.0
-    blur = tf.cast(blur, dtype=tf.uint8)
-    blur = tf.io.encode_jpeg(blur)
-    tf.io.write_file('blur.jpg', blur)
+outputs = preprocess_input(inputs)
 
-for image in dataset.skip(11).take(1):
-    sharp = (image[0][0] * 128.0) + 127.0
-    sharp = tf.cast(sharp, dtype=tf.uint8)
-    sharp = tf.io.encode_jpeg(sharp)
-    tf.io.write_file('sharp1.jpg', sharp)
-
-    blur = (image[0][1] * 128.0) + 127.0
-    blur = tf.cast(blur, dtype=tf.uint8)
-    blur = tf.io.encode_jpeg(blur)
-    tf.io.write_file('blur1.jpg', blur)
+print(outputs)
 
 """
 import tensorflow as tf
