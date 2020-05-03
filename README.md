@@ -1,5 +1,5 @@
 # Deep Deblurring Model
-![Development Status](https://github.com/ElPapi42/deep-deblurring-model/workflows/Test%20Deblurrer/badge.svg)
+![Development Status](https://github.com/ElPapi42/deep-deblurring-model/workflows/Test%20Deblurrer/badge.svg)  
 Image Deblurring Deep Learning Model Built Over Tensorflow 2.X and Keras
 
 The architeture was built taking the specifications from DeblurGAN-V2 Paper by Orest Kupyn and Team "[DeblurGAN-v2: Deblurring (Orders-of-Magnitude) Faster and Better](https://arxiv.org/abs/1908.03826)" as well as the Datasets recomended by the authors.
