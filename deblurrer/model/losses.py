@@ -25,10 +25,11 @@ def ragan_ls_loss(preds, real_preds):
     # This factor allows soft/smooth labels
     # We use one sided soft labels due the ragan loss design
     soft_factor = tf.ones_like(preds)
-    soft_factor += 0.1 * tf.random.uniform(
+    soft_factor += tf.cast(0.1, dtype=preds.dtype) * tf.random.uniform(
         shape=tf.shape(preds),
         minval=-1.0,
         maxval=1.0,
+        dtype=preds.dtype,
     )
 
     first_side = tf.multiply(real_preds * soft_factor, tf.square(preds - 1))
