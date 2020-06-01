@@ -8,6 +8,7 @@ This module will eclusively contains training logic.
 """
 
 import os
+from datetime import datetime
 
 from dotenv import load_dotenv
 import tensorflow as tf
@@ -25,6 +26,7 @@ def run(
     disc_optimizer=None,
     strategy=None,
     output_folder='',
+    logs_folder='',
     warm_epochs=0,
 ):
     """
@@ -37,6 +39,8 @@ def run(
         disc_optimizer (tf.keras.optimizers.Optimizer): Disc optimizer
         strategy (tf.distributed.Strategy): Distribution strategy
         output_folder (str): Where to store images for performance test
+        logs_folder (str): Where to store training logs
+        warm_epochs (int): Number of epoch for freeze the FPN Backend
 
     Returns:
         model, generator optimizer, discriminator optimizer and strategy
@@ -138,6 +142,11 @@ def run(
             validation_data=valid_dataset,
             callbacks=[
                 SaveImageToDisk(output_folder, test_image),
+                tf.keras.callbacks.TensorBoard(
+                    log_dir = os.path.join(logs_folder, datetime.now().strftime("%Y%m%d-%H%M%S")),
+                    histogram_freq = 1,
+                    profile_batch = '20,40',
+                ),
             ],
         )
 
@@ -167,8 +176,11 @@ if (__name__ == '__main__'):
 
     output_path = os.path.join(path, 'output')
 
+    logs_path = os.path.join(path, 'logs')
+
     run(
         tfrec_path,
         output_folder=output_path,
+        logs_folder=logs_path,
         warm_epochs=int(os.environ['WARM_EPOCHS']),
     )
