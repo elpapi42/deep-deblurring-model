@@ -27,7 +27,6 @@ def run(
     strategy=None,
     output_folder='',
     logs_folder='',
-    warm_epochs=0,
 ):
     """
     Run the training script.
@@ -104,7 +103,7 @@ def run(
         model.summary()
 
         # Train GAN freezing the generator backbone
-        if (int(warm_epochs) > 0):
+        if (int(os.environ['WARM_EPOCHS']) > 0):
             print('Starting model warm up...')
 
             model.generator.fpn.backbone.backbone.trainable = False
@@ -145,7 +144,7 @@ def run(
                 tf.keras.callbacks.TensorBoard(
                     log_dir = os.path.join(logs_folder, datetime.now().strftime("%Y%m%d-%H%M%S")),
                     histogram_freq = 1,
-                    profile_batch = '20,40',
+                    profile_batch = os.environ['PROFILE_BATCH'],
                 ),
             ],
         )
@@ -158,9 +157,7 @@ if (__name__ == '__main__'):
     path = os.path.dirname(
         os.path.dirname(
             os.path.dirname(
-                os.path.dirname(
-                    os.path.abspath(__file__),
-                ),
+                os.path.abspath(__file__),
             ),
         ),
     )
@@ -182,5 +179,4 @@ if (__name__ == '__main__'):
         tfrec_path,
         output_folder=output_path,
         logs_folder=logs_path,
-        warm_epochs=int(os.environ['WARM_EPOCHS']),
     )
