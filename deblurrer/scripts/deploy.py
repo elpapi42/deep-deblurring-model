@@ -8,6 +8,7 @@ This module will eclusively contains training logic.
 """
 
 import os
+import pathlib
 
 import tensorflow as tf
 from dotenv import load_dotenv
@@ -27,21 +28,20 @@ tf.enable_v2_behavior()
 
 from tensorflow import keras
 import numpy as np
-import pathlib
 
 
-def wrap(gan):
+def wrap(model):
     """
     Extracts the generator rom the supplied GAN.
     Wraps it with bytes encoder/decoder and b64 encoder.
 
     Args:
-        gan (tf.keras.Model): GAN Model
+        model (tf.keras.Model): GAN Model
 
     Returns:
         Wrapped and initialized model generator
     """
-    wrapped_generator = ImageByteWrapper(model.generator)
+    wrapped_generator = ImageByteWrapper(model)
 
     # Run a forward pass for init the inputs of the wrapper
     test_input = tf.random.uniform(shape=[64, 64, 3], minval=0, maxval=255, dtype=tf.int32)
@@ -72,16 +72,30 @@ def convert(model):
 
     return tflite_model
 
+def save(path, model):
+    """
+    This function writes the final tflite model to disk.
 
-def run(gan):
+    Args:
+        path (str): Where to store the flat buffer file
+    """
+    tflite_models_dir = pathlib.Path(path)
+    tflite_models_dir.mkdir(exist_ok=True, parents=True)
+    tflite_model_file = tflite_models_dir/'mnist_model.tflite'
+    tflite_model_file.write_bytes(model)
+
+
+
+def run(gan, path):
     generator = wrap(gan)
 
-    tflite_gen = convert(generator)
+    tflite_gen = convert(gan)
+
+    save(path, tflite_gen)
 
     return tflite_gen
 
 if (__name__ == '__main__'):
-    """
     path = os.path.dirname(
         os.path.dirname(
             os.path.dirname(
@@ -89,6 +103,7 @@ if (__name__ == '__main__'):
             ),
         ),
     )
+    tflite_path = os.path.join(path, 'tflite')
 
     # Load .env vars
     dotenv_path = os.path.join(path, '.env')
@@ -108,8 +123,8 @@ if (__name__ == '__main__'):
         output_folder=output_path,
         logs_folder=logs_path,
     )
-    """
 
+    """
     # Load MNIST dataset
     mnist = keras.datasets.mnist
     (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
@@ -138,5 +153,6 @@ if (__name__ == '__main__'):
         epochs=1,
         validation_data=(test_images, test_labels)
     )
+    """
 
-    generator = convert(model)
+    generator = run(model.generator.fpn.backbone.backbone, tflite_path)

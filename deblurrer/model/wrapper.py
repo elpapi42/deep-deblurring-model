@@ -42,7 +42,7 @@ class ImageByteWrapper(Model):
         images = tf.map_fn(pre_input, inputs, dtype=tf.float32)
 
         outputs = self.model(images)
-
+        """
         def post_output(output):
             output = (output * 128.0) + 127.0
             output = tf.cast(output, dtype=tf.uint8)
@@ -51,6 +51,6 @@ class ImageByteWrapper(Model):
             return output
 
         outputs = tf.map_fn(post_output, outputs, dtype=tf.string)
-
+        """
         return outputs
 
