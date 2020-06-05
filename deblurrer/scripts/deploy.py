@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 from deblurrer.model.wrapper import ImageByteWrapper
 from deblurrer.scripts.train import run as train
-
+"""
 import logging
 logging.getLogger("tensorflow").setLevel(logging.DEBUG)
 
@@ -25,7 +25,7 @@ try:
 except Exception:
   pass
 tf.enable_v2_behavior()
-
+"""
 from tensorflow import keras
 import numpy as np
 
@@ -68,6 +68,10 @@ def convert(model):
     """
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
     converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+    converter.target_spec.supported_ops = [
+        tf.lite.OpsSet.TFLITE_BUILTINS,
+        tf.lite.OpsSet.SELECT_TF_OPS,
+    ]
     tflite_model = converter.convert()
 
     return tflite_model
@@ -155,4 +159,4 @@ if (__name__ == '__main__'):
     )
     """
 
-    generator = run(model.generator.fpn.backbone.backbone, tflite_path)
+    generator = run(model.generator, tflite_path)
