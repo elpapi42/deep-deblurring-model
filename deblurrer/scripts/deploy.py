@@ -15,19 +15,6 @@ from dotenv import load_dotenv
 
 from deblurrer.model.wrapper import ImageByteWrapper
 from deblurrer.scripts.train import run as train
-"""
-import logging
-logging.getLogger("tensorflow").setLevel(logging.DEBUG)
-
-try:
-  # %tensorflow_version only exists in Colab.
-  import tensorflow.compat.v2 as tf
-except Exception:
-  pass
-tf.enable_v2_behavior()
-"""
-from tensorflow import keras
-import numpy as np
 
 
 def wrap(model):
@@ -36,7 +23,7 @@ def wrap(model):
     Wraps it with bytes encoder/decoder and b64 encoder.
 
     Args:
-        model (tf.keras.Model): GAN Model
+        model (tf.keras.Model): Generator Model
 
     Returns:
         Wrapped and initialized model generator
@@ -53,6 +40,7 @@ def wrap(model):
         b64_output = wrapped_generator(test_input)
     
     return wrapped_generator
+
 
 def convert(model):
     """
@@ -76,6 +64,7 @@ def convert(model):
 
     return tflite_model
 
+
 def save(path, model):
     """
     This function writes the final tflite model to disk.
@@ -89,7 +78,6 @@ def save(path, model):
     tflite_model_file.write_bytes(model)
 
 
-
 def run(gan, path):
     generator = wrap(gan)
 
@@ -98,6 +86,7 @@ def run(gan, path):
     save(path, tflite_gen)
 
     return tflite_gen
+
 
 if (__name__ == '__main__'):
     path = os.path.dirname(
@@ -127,36 +116,5 @@ if (__name__ == '__main__'):
         output_folder=output_path,
         logs_folder=logs_path,
     )
-
-    """
-    # Load MNIST dataset
-    mnist = keras.datasets.mnist
-    (train_images, train_labels), (test_images, test_labels) = mnist.load_data()
-
-    # Normalize the input image so that each pixel value is between 0 to 1.
-    train_images = train_images / 255.0
-    test_images = test_images / 255.0
-
-    # Define the model architecture
-    model = keras.Sequential([
-        keras.layers.InputLayer(input_shape=(28, 28)),
-        keras.layers.Reshape(target_shape=(28, 28, 1)),
-        keras.layers.Conv2D(filters=12, kernel_size=(3, 3), activation=tf.nn.relu),
-        keras.layers.MaxPooling2D(pool_size=(2, 2)),
-        keras.layers.Flatten(),
-        keras.layers.Dense(10, activation=tf.nn.softmax)
-    ])
-
-    # Train the digit classification model
-    model.compile(optimizer='adam',
-                loss='sparse_categorical_crossentropy',
-                metrics=['accuracy'])
-    model.fit(
-        train_images,
-        train_labels,
-        epochs=1,
-        validation_data=(test_images, test_labels)
-    )
-    """
 
     generator = run(model.generator, tflite_path)
