@@ -56,11 +56,11 @@ def convert(model):
         quantized tflite model
     """
     converter = tf.lite.TFLiteConverter.from_keras_model(model)
-    converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
-    converter.target_spec.supported_ops = [
-        tf.lite.OpsSet.TFLITE_BUILTINS,
-        tf.lite.OpsSet.SELECT_TF_OPS,
-    ]
+    #converter.optimizations = [tf.lite.Optimize.OPTIMIZE_FOR_SIZE]
+    #converter.target_spec.supported_ops = [
+        #tf.lite.OpsSet.TFLITE_BUILTINS,
+        #tf.lite.OpsSet.SELECT_TF_OPS,
+    #]
     tflite_model = converter.convert()
 
     return tflite_model
