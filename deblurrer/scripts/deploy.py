@@ -34,7 +34,8 @@ def wrap(model):
     test_input = tf.random.uniform(shape=[64, 64, 3], minval=0, maxval=255, dtype=tf.int32)
     test_input = tf.cast(test_input, dtype=tf.uint8)
     test_input = tf.io.encode_jpeg(test_input)
-    test_input = tf.reshape(test_input, [1, -1])
+    test_input = tf.stack([test_input, test_input])
+    test_input = tf.reshape(test_input, [-1, 1])
 
     with tf.device('/cpu:0'):
         b64_output = wrapped_generator(test_input)
@@ -78,14 +79,16 @@ def save(path, model):
     tflite_model_file.write_bytes(model)
 
 
-def run(gan, path):
-    generator = wrap(gan)
+def run(model, path):
+    """
+    Converts the supplied keras model to tflite.
+    and write the flat buffer to the specified path.
+    """
+    wrapped = wrap(model)
 
-    tflite_gen = convert(gan)
+    tflite = convert(wrapped)
 
-    save(path, tflite_gen)
-
-    return tflite_gen
+    save(path, tflite)
 
 
 if (__name__ == '__main__'):
