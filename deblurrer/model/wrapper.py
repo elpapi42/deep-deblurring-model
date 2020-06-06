@@ -33,7 +33,7 @@ class ImageByteWrapper(Model):
             b64 Encoded output of the model
         """
         def pre_input(image):
-            image = tf.io.decode_image(image[0])
+            image = tf.io.decode_image(image[0], channels=3)
             image = tf.cast(image, dtype=tf.float32)
             image = (image - 127.0) / 128.0
             return image
