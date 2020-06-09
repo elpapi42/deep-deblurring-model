@@ -32,24 +32,20 @@ class ImageByteWrapper(Model):
         Returns:
             b64 Encoded output of the model
         """
-        def pre_input(image):
-            image = tf.io.decode_image(image[0], channels=3)
-            image = tf.cast(image, dtype=tf.float32)
-            image = (image - 127.0) / 128.0
-            return image
+        # Decode image into 4D tensor
+        image = tf.io.decode_image(inputs[0][0], channels=3)
+        image = tf.cast(image, dtype=tf.float32)
+        image = (image - 127.0) / 128.0
+        image = tf.expand_dims(image, axis=0)
 
-        images = tf.map_fn(pre_input, inputs, dtype=tf.float32)
+        # Deblur Image
+        output = self.model(image)
 
-        outputs = self.model(images)
+        output = tf.squeeze(output, axis=0)
+        output = (output * 128.0) + 127.0
+        output = tf.cast(output, dtype=tf.uint8)
+        output = tf.io.encode_jpeg(output)
+        output = tf.io.encode_base64(output, pad=True)
 
-        def post_output(output):
-            output = (output * 128.0) + 127.0
-            output = tf.cast(output, dtype=tf.uint8)
-            output = tf.io.encode_jpeg(output)
-            output = tf.io.encode_base64(output, pad=True)
-            return output
-
-        outputs = tf.map_fn(post_output, outputs, dtype=tf.string)
-
-        return outputs
+        return output
 
