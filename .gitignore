@@ -132,3 +132,4 @@ datasets/
 output/
 credentials/
 /logs
+/tflite
