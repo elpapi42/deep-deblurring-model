@@ -1,4 +1,4 @@
-grpcio == 1.27.2
+grpcio == 1.53.0
 kaggle
 numpy
 tensorflow >= 2.2.0rc2
